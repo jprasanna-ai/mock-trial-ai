@@ -8,17 +8,37 @@
 
 ---
 
-## 2. Scoring Categories
+## 2. Role-Specific Scoring Categories
 
-Each category scored 1–10:
+Each participant is scored only on categories relevant to their role. Each category is scored 1-10.
 
-- Opening clarity
-- Direct examination effectiveness
-- Cross examination control
-- Objection accuracy
-- Responsiveness
-- Courtroom presence
-- Case theory consistency
+### Opening Attorney Categories
+- **Opening Clarity** — How clearly the advocate previewed their case theory
+- **Case Theory Consistency** — Was the case theory well established
+- **Courtroom Presence** — Professional demeanor, confidence, poise
+- **Persuasiveness** — How compelling and attention-capturing the opening was
+- **Factual Foundation** — Did the opening properly preview the facts to be proven
+
+### Direct/Cross Examination Attorney Categories
+- **Direct Examination Effectiveness** — Quality of direct questions, non-leading, logical story building
+- **Cross-Examination Control** — Control of witness, leading questions, advancing case theory
+- **Objection Accuracy** — Appropriate objections on valid grounds, no frivolous objections
+- **Responsiveness** — Adapting to testimony, rulings, and court instructions
+- **Courtroom Presence** — Professional demeanor, confidence, poise
+
+### Closing Attorney Categories
+- **Closing Persuasiveness** — Strength of the closing argument, appeal to logic and emotion
+- **Evidence Integration** — How well evidence and testimony were woven into the closing
+- **Rebuttal Effectiveness** — How effectively the opponent's arguments were addressed
+- **Case Theory Consistency** — Did closing tie back to the opening and examination themes
+- **Courtroom Presence** — Professional demeanor, confidence, poise
+
+### Witness Categories
+- **Responsiveness** — Answered questions directly and on-point
+- **Courtroom Presence** — Professional demeanor, confidence, poise
+- **Testimony Consistency** — Internal consistency with prior statements and established facts
+- **Credibility** — How believable, honest, and trustworthy the witness appeared
+- **Composure Under Pressure** — Handling challenging cross-examination without getting flustered
 
 ---
 
@@ -35,14 +55,44 @@ Judges must consider:
 ## 4. Ballots
 
 Each judge produces:
-- Numeric scores
+- Numeric scores (1-10) per applicable category
 - Written justification per category
+- Overall comments with strengths and improvement suggestions
 
-Final score:
-Average of all judges.
+Final score per participant:
+Average across all scored categories for that role.
 
 ---
 
-## 5. Anti-Hallucination Rule
+## 5. Live Scoring
+
+- Live scoring runs after each witness examination and after opening/closing arguments
+- Uses a single judge for speed (full 3-judge panel for final scoring)
+- Results cached in memory and exposed via `/api/scoring/{session_id}/live-scores`
+- Frontend polls for updates and displays in the Scores & Stats panel
+
+---
+
+## 6. Score Detail Page
+
+The `/scores/{sessionId}` page provides:
+- **Category-by-category breakdown** with every team member's score and justification per category
+- **Individual performance cards** per participant with strengths (7+) and improvement areas (<7)
+- **Overall judge comments** per participant
+- Full report available via `GET /api/scoring/{session_id}/full-report`
+
+---
+
+## 7. Score Persistence
+
+- In-memory cache for fast live score access
+- Supabase (PostgreSQL) for persistent storage via `ScoringRepository`
+- Stored data: session ID, participant ID, role, ballots, final scores, overall average
+
+---
+
+## 8. Anti-Hallucination Rule
 
 Judges may only score what occurred in transcript + audio timeline.
+Do not invent or assume things that did not happen.
+If a category cannot be assessed from evidence, score 5 and explain why.

@@ -74,6 +74,20 @@ Behavior:
 - Minimal verbosity during trial
 - Detailed justification post-trial
 
+### Role-Specific Scoring
+
+Judges score each participant only on categories applicable to their role:
+
+| Role | Categories (5 each) |
+|------|-------------------|
+| Opening Attorney | Opening Clarity, Case Theory Consistency, Courtroom Presence, Persuasiveness, Factual Foundation |
+| Direct/Cross Attorney | Direct Examination, Cross-Examination Control, Objection Accuracy, Responsiveness, Courtroom Presence |
+| Closing Attorney | Closing Persuasiveness, Evidence Integration, Rebuttal Effectiveness, Case Theory Consistency, Courtroom Presence |
+| Witness | Responsiveness, Courtroom Presence, Testimony Consistency, Credibility, Composure Under Pressure |
+
+Categories are defined in `ScoringCategory` enum in `backend/app/agents/judge.py`.
+Category sets per role are defined via `get_categories_for_subrole()`.
+
 ---
 
 ## 5. Coach Agent

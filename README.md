@@ -131,8 +131,10 @@ The **LangGraph trial state machine** is the authority for:
 
 Each AI agent can be configured independently with its own model, temperature, and system prompt.
 
-### Data
-- Supabase (PostgreSQL - sessions, scores)
+### Data & Auth
+- Supabase (PostgreSQL - sessions, scores, transcript history)
+- Supabase Auth (email + OAuth: Google, LinkedIn, Facebook, Discord)
+- Supabase Storage (case materials, trial transcripts)
 - Pinecone (case data, memory)
 
 ---
@@ -180,6 +182,8 @@ LOG_LEVEL=INFO  # optional, defaults to "INFO"
 **Frontend `.env.local`:**
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 > **Security Notes:**
@@ -588,10 +592,12 @@ Attorney question → Opposing attorney evaluates → Objection raised (if warra
 
 ## 19. Scoring & Live Stats
 
-- **Live scoring** updates after each witness examination
+- **Live scoring** updates after each witness examination and after opening/closing arguments
 - Scores are displayed in the **Scores & Stats** panel (always visible, top of right column)
 - Each score bar clearly labels **PROS** (prosecution) or **DEF** (defense)
 - Witness scores show which side called them
+- **Role-specific categories**: Opening attorneys, direct/cross attorneys, closing attorneys, and witnesses each have 5 tailored scoring categories (see Section 24)
+- Click **View Detailed Scores** to navigate to the full score breakdown page at `/scores/{sessionId}`
 
 ---
 
@@ -628,3 +634,142 @@ AI-generated preparation materials (case briefs, witness outlines, opening state
 | **Local `.agent_prep_cache/` directory** | Fast file-system cache |
 
 On session creation, the system checks both caches before generating new materials. Users can force regeneration if needed.
+
+---
+
+## 22. Authentication
+
+The platform uses **Supabase Auth** for user authentication with the following login methods:
+
+- Email/password (sign up + sign in)
+- Google OAuth
+- LinkedIn (OpenID Connect)
+- Facebook OAuth
+- Discord OAuth
+
+### Architecture
+
+- Frontend uses `@supabase/ssr` for Next.js-compatible auth
+- Next.js middleware (`middleware.ts`) protects all routes — unauthenticated users are redirected to `/login`
+- Backend validates JWT tokens from the `Authorization` header via `get_current_user_id()` dependency
+- User ID from JWT is used to scope transcript history and other user-specific data
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `frontend/app/login/page.tsx` | Login/signup page with email + social buttons |
+| `frontend/app/auth/callback/route.ts` | OAuth redirect callback handler |
+| `frontend/lib/supabase/client.ts` | Browser-side Supabase client |
+| `frontend/lib/supabase/server.ts` | Server-side Supabase client |
+| `frontend/lib/supabase/middleware.ts` | Session refresh helper for middleware |
+| `frontend/middleware.ts` | Route protection middleware |
+| `backend/app/api/auth.py` | Backend JWT validation |
+
+### Frontend Environment Variables
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+### OAuth Provider Setup
+
+Each OAuth provider must be configured in the **Supabase Dashboard** (Authentication > Providers) with the redirect URI: `https://YOUR_SUPABASE_REF.supabase.co/auth/v1/callback`
+
+| Provider | Developer Console |
+|----------|------------------|
+| Google | [Google Cloud Console](https://console.cloud.google.com/) > APIs & Services > Credentials |
+| LinkedIn | [LinkedIn Developer Portal](https://www.linkedin.com/developers/) |
+| Facebook | [Facebook Developers](https://developers.facebook.com/) |
+| Discord | [Discord Developer Portal](https://discord.com/developers/applications) |
+
+---
+
+## 23. Transcript History
+
+Trial transcripts are progressively saved to **Supabase Storage** during the trial and can be reviewed later.
+
+### How It Works
+
+- Transcripts are saved automatically after opening statements, each witness examination, and closing arguments
+- Stored as JSON files in Supabase Storage: `transcripts/{user_id}/{case_id}/{session_id}.json`
+- Metadata (case name, date, session ID, phases completed) is tracked in a `trial_transcript_history` database table
+
+### Viewing History
+
+- Navigate to `/history` from the app header
+- Transcripts are grouped by case name
+- Each entry shows: date/time, role played, entry count, phases completed
+- Click to expand and read the full transcript
+
+### API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/trial/{session_id}/save-transcript` | Manually save current transcript |
+| `GET /api/trial/transcripts/history` | List all transcripts for the current user |
+| `GET /api/trial/transcripts/{session_id}` | Get full transcript data for a session |
+
+---
+
+## 24. Score Detail Page
+
+The `/scores/{sessionId}` page provides a detailed breakdown of judge scoring.
+
+### What It Shows
+
+1. **Score Breakdown by Category** — For each scoring category, see how every team member scored with the judge's justification
+2. **Individual Performance** — Per-participant cards (Prosecution vs Defense) with:
+   - Category scores with score bars and judge justification
+   - Strengths (categories scored 7+) highlighted in green
+   - Suggestions to improve (categories below 7) highlighted in amber
+   - Overall judge comments
+3. **Scoring Categories Reference** — Descriptions of what each category measures
+
+### Role-Specific Scoring
+
+Each participant is scored only on categories relevant to their role:
+
+| Role | Categories |
+|------|-----------|
+| **Opening Attorney** | Opening Clarity, Case Theory Consistency, Courtroom Presence, Persuasiveness, Factual Foundation |
+| **Direct/Cross Attorney** | Direct Examination, Cross-Examination Control, Objection Accuracy, Responsiveness, Courtroom Presence |
+| **Closing Attorney** | Closing Persuasiveness, Evidence Integration, Rebuttal Effectiveness, Case Theory Consistency, Courtroom Presence |
+| **Witness** | Responsiveness, Courtroom Presence, Testimony Consistency, Credibility, Composure Under Pressure |
+
+---
+
+## 25. Deployment
+
+The application is deployed as a split architecture:
+
+| Component | Platform | URL |
+|-----------|----------|-----|
+| Frontend (Next.js) | Vercel | `https://mock-trial-ai.vercel.app` |
+| Backend (FastAPI) | Render | `https://mock-trial-ai.onrender.com` |
+| Database & Auth | Supabase | Managed service |
+
+### Backend (Render)
+
+- Runtime: Python 3.11
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- CORS origins configured via `CORS_ORIGINS` environment variable
+- Blueprint file: `backend/render.yaml`
+
+### Frontend (Vercel)
+
+- Framework: Next.js 14 (auto-detected)
+- Root directory: `frontend`
+- Output: Standalone (`next.config.mjs`)
+- Environment variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+### Supabase Configuration
+
+For production, update in the Supabase Dashboard:
+- **Site URL**: Your Vercel domain
+- **Redirect URLs**: `https://your-domain.vercel.app/auth/callback`
+
+### GitHub Repository
+
+Source code: [github.com/jprasanna-ai/mock-trial-ai](https://github.com/jprasanna-ai/mock-trial-ai)

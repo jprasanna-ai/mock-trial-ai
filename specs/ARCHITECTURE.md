@@ -126,3 +126,33 @@ Each agent persona carries optional LLM overrides:
 Resolution order: **per-agent override → global session override → method default**
 
 Changes saved via the persona API are hot-patched to live agents immediately.
+
+---
+
+## Authentication
+
+- **Supabase Auth** for user identity (email + OAuth providers)
+- Frontend: `@supabase/ssr` with Next.js middleware for route protection
+- Backend: JWT validation via `get_current_user_id()` dependency
+- User ID scopes transcript history and storage paths
+
+---
+
+## Transcript Storage
+
+- **Supabase Storage bucket**: `trial-transcripts`
+- File path: `transcripts/{user_id}/{case_id}/{session_id}.json`
+- **Metadata table**: `trial_transcript_history` (session_id, user_id, case_id, case_name, started_at, entry_count, phases)
+- Transcripts saved progressively after openings, each exam, and closings
+
+---
+
+## Deployment
+
+| Component | Platform | Config |
+|-----------|----------|--------|
+| Frontend | Vercel | `frontend/next.config.mjs` (standalone output) |
+| Backend | Render | `backend/render.yaml` (Python 3.11, uvicorn) |
+| Database | Supabase | PostgreSQL + Auth + Storage |
+
+CORS origins are configured via the `CORS_ORIGINS` environment variable (comma-separated).

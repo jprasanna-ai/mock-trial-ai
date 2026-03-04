@@ -144,3 +144,34 @@ and AI agent context:
 | Motions in limine | Pre-trial rulings | Injected into attorney agent context to prevent excluded evidence arguments |
 | Special instructions | Full set | Included in attorney `_build_case_context()` as binding rules |
 | Jury instruction elements | Numbered | Fed to attorneys so opening/closing statements address required elements |
+
+---
+
+## 5. Trial Phase Sequence
+
+```
+PREP → OPENING → PLAINTIFF_CASE → DEFENSE_CASE → CLOSING → SCORING → COMPLETE
+```
+
+Within each case-in-chief (plaintiff/defense):
+```
+For each witness:
+  DIRECT → CROSS → REDIRECT (optional) → RECROSS (optional)
+```
+
+---
+
+## 6. Authentication
+
+- Users must log in before accessing the app
+- Supported methods: email/password, Google, LinkedIn, Facebook, Discord
+- Authentication handled by Supabase Auth
+- Next.js middleware redirects unauthenticated users to `/login`
+
+---
+
+## 7. Transcript History
+
+- Transcripts are saved progressively to Supabase Storage during the trial
+- Users can review past trial transcripts at `/history`
+- Transcripts are grouped by case name and show date, role, and phases completed

@@ -64,3 +64,32 @@ Opening statements use a pre-generation + TTS-only pipeline to minimize courtroo
 - Agents request TTS via backend with persona parameters.
 - Frontend streams mic audio → backend → Whisper → text → agent → TTS → audio stream.
 - No keys are exposed in frontend or agent code.
+
+---
+
+## 6. TTS Fallback Chain
+
+Audio playback uses a cascading fallback for reliability:
+
+1. **Preloaded blob** — Prefetched during Q&A generation
+2. **Backend TTS fetch** — OpenAI TTS API with retries and text-based cache
+3. **Browser speech synthesis** — With Chrome queue-clearing workaround
+4. **Reading delay** — Proportional to text length (last resort)
+
+---
+
+## 7. TTS Reliability
+
+- Backend caches audio by text content hash — identical text never regenerates
+- Backend retries TTS generation up to 2 times on failure
+- Long text (>4096 chars) is split at sentence boundaries and chunks are concatenated
+- Frontend `withTimeout` wrappers include proper cleanup to prevent orphaned timers
+
+---
+
+## 8. Audio/Transcript Consistency
+
+Audio content must always match the transcript text:
+- Cached opening audio is only used when the text also came from the same cache
+- If opening text is freshly generated, TTS is always generated from that exact text
+- This prevents stale cached audio from playing while the transcript shows different text

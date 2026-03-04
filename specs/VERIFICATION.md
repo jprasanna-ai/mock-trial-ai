@@ -69,3 +69,32 @@
 - [x] UI reflects trial state (phase indicators, speaker permissions, courtroom page)
 - [x] Collapsible Scores & Stats panel with side grouping
 - [x] Collapsible phase progress bar
+
+---
+
+## Authentication
+- [x] Supabase Auth integration (email + OAuth)
+- [x] Next.js middleware route protection
+- [x] Login page with email and 4 social providers
+- [x] OAuth callback handler
+- [x] Backend JWT validation
+- [x] User ID propagation to storage/transcript APIs
+
+## Transcript History
+- [x] Progressive transcript saving to Supabase Storage
+- [x] Transcript metadata table
+- [x] History page (`/history`) grouped by case name
+- [x] Transcript viewer with expandable entries
+
+## Score Detail Page
+- [x] Category-by-category breakdown with per-member scores
+- [x] Individual performance cards with strengths/improvements
+- [x] Judge comments and justifications
+- [x] Role-specific scoring categories (5 per role)
+
+## Deployment
+- [x] Vercel deployment (frontend, standalone output)
+- [x] Render deployment (backend, render.yaml blueprint)
+- [x] Dynamic CORS via `CORS_ORIGINS` env var
+- [x] GitHub repository at `jprasanna-ai/mock-trial-ai`
+- [x] Supabase Auth redirect URLs configured for production
