@@ -631,12 +631,12 @@ export function CaseMaterialsModal({
                           <span className="w-2 h-2 rounded-full bg-blue-400" />
                           {materials.case_type === "criminal" ? "Prosecution" : "Plaintiff"} Witnesses
                           <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded-full">
-                            {materials.witnesses.filter((w) => w.called_by === "plaintiff" || w.called_by === "prosecution").length}
+                            {materials.witnesses.filter((w) => w.called_by === "plaintiff").length}
                           </span>
                         </h3>
                         <div className="space-y-3">
                           {materials.witnesses
-                            .filter((w) => w.called_by === "plaintiff" || w.called_by === "prosecution")
+                            .filter((w) => w.called_by === "plaintiff")
                             .map((witness) => (
                               <WitnessCard
                                 key={witness.id}
@@ -1377,10 +1377,10 @@ function WitnessCard({
       >
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            (witness.called_by === "plaintiff" || witness.called_by === "prosecution") ? "bg-blue-500/20" : "bg-emerald-500/20"
+            witness.called_by === "plaintiff" ? "bg-blue-500/20" : "bg-emerald-500/20"
           }`}>
             <UserIcon className={`w-5 h-5 ${
-              (witness.called_by === "plaintiff" || witness.called_by === "prosecution") ? "text-blue-400" : "text-emerald-400"
+              witness.called_by === "plaintiff" ? "text-blue-400" : "text-emerald-400"
             }`} />
           </div>
           <div className="text-left">

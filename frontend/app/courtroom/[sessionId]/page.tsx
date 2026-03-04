@@ -3289,7 +3289,7 @@ export default function CourtroomPage() {
                   {/* Witness Stand & Examination Flow */}
                   {(normalizedPhase === "direct" || normalizedPhase === "cross" ||
                     normalizedPhase === "redirect" || normalizedPhase === "recross") && (() => {
-                    const prosWitnesses = witnesses.filter((w) => w.called_by === "plaintiff" || w.called_by === "prosecution");
+                    const prosWitnesses = witnesses.filter((w) => w.called_by === "plaintiff");
                     const defWitnesses = witnesses.filter((w) => w.called_by === "defense");
                     const currentSideWitnesses = caseInChief === "defense" ? defWitnesses : prosWitnesses;
                     const examinedCount = currentSideWitnesses.filter((w) => w.is_examined).length;
