@@ -1,0 +1,1436 @@
+{
+  "name": "State of Midlands v. Charlie Martin",
+  "case_number": "CR25-04-1009",
+  "court": "",
+  "jurisdiction": "Midlands",
+  "revision_date": "01/05/26",
+  "plaintiff": "State of Midlands",
+  "defendant": "Charlie Martin",
+  "charge": "MURDER",
+  "charge_detail": "On or about April 6, 2025, in Charlotte County, Midlands, Charlie Martin caused the death of Rob Armstrong purposefully, knowingly, or recklessly under circumstances which manifested an extreme indifference to the value of human life, which constitutes the offense of MURDER, a Felony of the First Degree, in violation of Midlands Penal Code 18-303, and against the peace and dignity of the State of Midlands. R. Pickell R. Pickell (00341050) ASST. PROSECUTING ATTORNEYCHARLOTTE COUNTY",
+  "case_type": "criminal",
+  "synopsis": "Charlie Martin was indicted for criminal homicide for causing the death of fellow contestant Rob \nArmstrong during the filming of reality TV show The Saboteurs . Charlie Martin has entered a plea of \n\u201cnot guilty\u201d and the matter is scheduled for a jury trial in the Charlotte County District Court.",
+  "summary": "Charlie Martin was indicted for criminal homicide for causing the death of fellow contestant Rob \nArmstrong during the filming of reality TV show The Saboteurs . Charlie Martin has entered a plea of \n\u201cnot guilty\u201d and the matter is scheduled for a jury trial in the Charlotte County District Court.",
+  "description": "Charlie Martin was indicted for criminal homicide for causing the death of fellow contestant Rob \nArmstrong during the filming of reality TV show The Saboteurs . Charlie Martin has entered a plea of \n\u201cnot guilty\u201d and the matter is scheduled for a jury trial in the Charlotte County District Court.",
+  "available_witnesses": [
+    {
+      "name": "Rowan Patel",
+      "role": "Challenge Designer"
+    },
+    {
+      "name": "Nel Doos",
+      "role": "The Saboteurs  Contestant"
+    },
+    {
+      "name": "Indigo Quade",
+      "role": "The Saboteurs Host"
+    },
+    {
+      "name": "Taylor Jha",
+      "role": "Podcaster"
+    },
+    {
+      "name": "Riley Kaye",
+      "role": "The Saboteurs Producer"
+    },
+    {
+      "name": "Taren Rivera",
+      "role": "Federal Investigator"
+    },
+    {
+      "name": "Lennox Reynolds",
+      "role": "Caretaker"
+    },
+    {
+      "name": "Dr. Atlas Hartley",
+      "role": "Medical Examiner"
+    },
+    {
+      "name": "Dr. Grey Marlowe",
+      "role": "Physician"
+    },
+    {
+      "name": "Dr. Micah Lin",
+      "role": "Clinical Psychologist"
+    },
+    {
+      "name": "Charlie Martin",
+      "role": "Accused"
+    }
+  ],
+  "witness_calling_restrictions": {
+    "prosecution_only": [
+      "Riley Kaye",
+      "Dr. Atlas Hartley",
+      "Investigator Taren Rivera",
+      "Rowan Patel"
+    ],
+    "defense_only": [
+      "Charlie Martin",
+      "Dr. Grey Marlowe",
+      "Dr. Micah Lin"
+    ],
+    "either_side": [
+      "Nel Doos",
+      "Indigo Quade",
+      "Taylor Jha",
+      "Lennox Reynolds"
+    ]
+  },
+  "special_instructions": [
+    {
+      "number": 1,
+      "title": "Witness Selection and Captains\u2019 Meeting Procedures.",
+      "content": "The Captains\u2019 Meeting Form explains the procedures regarding witness selection, character genders, and characters\u2019 personal traits."
+    },
+    {
+      "number": 2,
+      "title": "Revision Dates.",
+      "content": "Revision dates do not indicate anything about the history of case documents. They exist solely to ensure participants use the most recent version at trial. Parties may not use these dates to introduce facts about the case."
+    },
+    {
+      "number": 3,
+      "title": "Documents are what they purport to be.",
+      "content": "Witnesses must acknowledge authorship of any document that purports to be authored by them and the authenticity of any signature that purports to be theirs. A witness whose affidavit, report, or interrogation states a witness is familiar with a particular document must acknowledge that the witness is familiar with that document and that the referenced document is the same version as the corresponding document in the current case ."
+    },
+    {
+      "number": 4,
+      "title": "Reports.",
+      "content": "The reports of Dr. Atlas Hartley, Dr. Grey Marlowe, and Dr. Micah Lin are \u201caffidavits\u201d for the purposes of AMTA Rules 8.9 (Invention of Fact) and 8.17 (Admission)."
+    },
+    {
+      "number": 5,
+      "title": "Defendant Materials.",
+      "content": "Charlie Martin only has an interrogation (Exhibit 7). Martin may not deny the veracity of statements they have made in the interrogation (with the exception of the following statement s (1) \u201cI am not a Saboteur\u201d, (2) \u201cTo clean up that wine spill in my room. That \u2013 uh \u2013 that was the last time\u201d, and (3) \u201cNo. I wasn\u2019t near them.\u201d (referring to the walkie talkies). Additionally, Martin\u2019s interrogation (Exhibit 7) is not an \u201caffidavit\u201d for purposes of AMTA Rules 8.9 (Invention of Fact) or 8.17 (Admission). Students playing Martin may build their testimony using the interrogation and other documents in the case. Mart in (and only Martin) may also invent facts outside of the case documents but can still be cross- examined on those inventions using the interrogation, exhibits, or other case materials. All inventions of fact by Martin must comply with all AMTA Rules and other special instructions in the case. In particular, Martin may not (a) deny giv ing the answers given in the interrogation (Exhibit 7); (b) claim that Martin was lying during the interrogation (Exhibit 7) except for (1) \u201cI am not a Saboteur\u201d, (2) \u201cTo clean up that wine spill in my room. That \u2013 uh \u2013 that was the last time\u201d, and (3) \u201cNo. I wasn\u2019t near them.\u201d (referring to the walkie talkies) ; or (c) recant the answers given in the interrogation (Exhibit 7). Violation of this special instruction may constitute an improper invention of material fact and is subject to review by the Competition Integrity Committee."
+    },
+    {
+      "number": 6,
+      "title": "Party Representatives.",
+      "content": "Charlie Martin and Investigator Taren Rivera are the only permissible party representatives under Rule 615 of the Midlands Rules of Evidence."
+    },
+    {
+      "number": 7,
+      "title": "Closed-Universe Problem.",
+      "content": "The only legal material that competitors may mention, or judges may rely upon, for any purpose are those set forth in the \u201cRelevant Midlands Law\u201d and the Midlands Rules of Evidence. All participants must acknowledge such if asked."
+    },
+    {
+      "number": 8,
+      "title": "Fifth Amendment.",
+      "content": "No witness may refuse to answer any question\u2014and no attorney may instruct a witness not to respond\u2014based on the witness\u2019s Fifth Amendment rights."
+    },
+    {
+      "number": 9,
+      "title": "Black-and-White Copies.",
+      "content": "No objection may be raised on the ground that a document, exhibit, or demonstrative was altered by printing it in black -and-white."
+    },
+    {
+      "number": 10,
+      "title": "Charge(s) and Defense(s).",
+      "content": "The prosecution must pursue the charge of murder. The defense must argue that Martin is not guilty of murder. Defense is permitted to present a theory in its opening statement, case -in-chief, and closing arguments that Charlie Martin is not guilty of Revised 01/05/26 2 murder but perhaps guilty of the lesser included offense of negligent homicide. The defense shall not argue that the defendant is guilty of manslaughter. Also, the State of Midlands still bears the burden of proof, even if the defense team decides to conce de negligent homicide. Thus, in an objection argument, the defense shall not claim that a certain element of the prosecution\u2019s case is irrelevant because the defense intends to present a case that concedes the elements of negligent homicide. Note : the purpose of this special instruction is to prevent defense teams from trying to stipulate or concede away the prosecution\u2019s ability to present evidence of murder as required herein. Violation of this special instruction may constitute an improper invention of material fact and is subject to review by the Competition Integrity Committee"
+    },
+    {
+      "number": 11,
+      "title": "Best Evidence Rule Limited to Items in the Case Packet.",
+      "content": "No attorney may object under Rule 1002 of the Midlands Rules of Evidence if the \u201coriginal writing, recording, or photograph\u201d in question is not among the documents contained in this case packet. Because no footage exists from The Saboteurs , no team shall make any objection under Midlands Rules of Evidence, Article X during the trial as it relates to the purported The Saboteurs video footage."
+    },
+    {
+      "number": 12,
+      "title": "Characteristics as Material Inventions.",
+      "content": "First, while teams may employ distinctive speech characteristics to develop a character, teams may not use such speech characteristics to invent material facts or contradict any stipulations. For example, a team cannot use a student\u2019s speech pattern to argue that the witness is not capable of making the statements described in the case materials. This instruction applies both to examination of witnesses and opening statements/closing arguments. Second, no competitor may imply in examination or argument that the student playing Martin lacked the physical or mental capacity to carry out the alleged crime. Violation of this special instruction may constitute an improper invention of material fact and is subject to review by the Competition Integrity Committee."
+    },
+    {
+      "number": 13,
+      "title": "Time Limits.",
+      "content": "Should a team wish to read part or all of a document onto the record, the time spent reading shall be deducted from that team\u2019s total 25 -minute direct or cross time, depending on whether the reading occurs during that team\u2019s case -in-chief or that of the opposing team. Reading onto the record may not occur before opening statements or after the defense team closes its case- in-chief."
+    },
+    {
+      "number": 14,
+      "title": "Defendant at Counsel Table.",
+      "content": "Because identifying the defendant is a necessary element of the prosecution\u2019s case, the defense team must either (1) have a student sitting at counsel table as Charlie Martin or (2) announce during pretrial that Charlie Martin is constructively sitting at defense counsel\u2019s table, including a description of Charlie Martin."
+    },
+    {
+      "number": 15,
+      "title": "Jury Instructions and Verdict Form.",
+      "content": "The jury instructions and verdict form included in the case packet are for educational purposes only. Neither document shall be admitted as an exhibit in trial. However, the closing attorneys may elect to discuss and hold up the jury instructions and verdict form during their respective closing arguments."
+    },
+    {
+      "number": 16,
+      "title": "Photo of Rob Armstrong.",
+      "content": "The prosecution team may elect to supply a picture of Rob Armstrong. The picture used must conform to the following requirements: it must show a male from the shoulders up, use a neutral- colored background, and shall not include any material inventions. If the prosecution team elects to provide a picture of Rob Armstrong, the photo must be shown to the defense team during the captains\u2019 meeting. Violation of this special instruction may constitute an improper invention of material fac t and is subject to review by the Competition Integrity Committee. Revised 01/05/26 3"
+    },
+    {
+      "number": 17,
+      "title": "No Guilty Portrayals.",
+      "content": "No testifying witness, except Charlie Martin, shall portray, explicitly or implicitly, their witness to be the person who killed Rob Armstrong."
+    },
+    {
+      "number": 18,
+      "title": "No Claims of Abuse.",
+      "content": "No team shall allege or argue that Charlie Martin was the victim of sexual assault or domestic violence, generally, or that Charlie Martin was threatened with acts of sexual assault or domestic violence."
+    },
+    {
+      "number": 19,
+      "title": "No Claims of Suicide.",
+      "content": "No team shall allege or argue that Rob Armstrong had suicidal ideations, threatened suicide, or committed suicide."
+    },
+    {
+      "number": 20,
+      "title": "Witness Competency.",
+      "content": "All parties and witnesses are of at least normal intelligence, and none has or ever has had a mental condition that would impact a person\u2019s perception, memory, or ability to respond to questions on cross examination. This stipulation does not prevent an attorney from crossing a witness on their perception or memory (or lack thereof). Violation of this special instruction may constitute an improper invention of material fact and is subject to review by the Competition Integrity Committee."
+    },
+    {
+      "number": 21,
+      "title": "Sample of Oxalic Acid.",
+      "content": "Either team may choose to supply a sealed bag that includes one teaspoon of white powdered or confectioners\u2019 sugar to represent exhibit"
+    },
+    {
+      "number": 22,
+      "title": "Hartley-Marlowe Pairing.",
+      "content": "If the Prosecution team calls Dr. Hartley, then the Defense team may choose to call Dr. Marlowe as a witness. If the Prosecution team does not call Dr. Hartley, then the Defense team cannot call Dr. Marlowe as a witness."
+    },
+    {
+      "number": 23,
+      "title": "Hartley Notice.",
+      "content": "Nothing about the Dr. Harley notice on the Captions\u2019 form requires the Prosecution team to select Dr. Hartley with its first witness selection."
+    },
+    {
+      "number": 24,
+      "title": "Scoop Exhibit.",
+      "content": "Either team may choose to supply a real scoop instead of the photo provided in Exhibit 32 provided that they match the correct specifications. The scoop can be either plastic or metal but cannot have any branding, words, or other insignias on the scoop. The scoop must measure out approximately 1 gram of fine powder when leveled off. If both teams provide a scoop, then the prosecution's scoop will be used. Teams may not use scales or other measuring devices in trial to dispute the volume capacity of the scoop. Any disputes that the scoop is the incorrect size must be resolved in captains\u2019 meeting."
+    }
+  ],
+  "indictment": {
+    "charge": "MURDER",
+    "charge_detail": "On or about April 6, 2025, in Charlotte County, Midlands, Charlie Martin caused the death of Rob Armstrong purposefully, knowingly, or recklessly under circumstances which manifested an extreme indifference to the value of human life, which constitutes the offense of MURDER, a Felony of the First Degree, in violation of Midlands Penal Code 18-303, and against the peace and dignity of the State of Midlands. R. Pickell R. Pickell (00341050) ASST. PROSECUTING ATTORNEYCHARLOTTE COUNTY",
+    "full_text": "Revised 01/05/26 DISTRICT COURT, CRIMINAL DIVISION CHARLOTTE COUNTY, MIDLANDS STATE OF MIDLANDS * CASE NO.: CR25 -04-1009 Plaintiff * v. * * CHARLIE MARTIN * Defendant * INDICTMENT STATE OF MIDLANDS, COUNTY OF CHARLOTTE, SS: In the Year 2025 THE JURORS OF THE GRAND JURY OF THE STATE OF MIDLANDS, within and for the body for the County aforesaid, on their oaths, in the name and by the authority of the State of Midlands, do find and present that: COUNT ONE MURDER On or about April 6, 2025, in Charlotte County, Midlands, Charlie Martin caused the death of Rob Armstrong purposefully, knowingly, or recklessly under circumstances which manifested an extreme indifference to the value of human life, which constitutes the offense of MURDER, a Felony of the First Degree, in violation of Midlands Penal Code 18-303, and against the peace and dignity of the State of Midlands. R. Pickell R. Pickell (00341050) ASST. PROSECUTING ATTORNEYCHARLOTTE COUNTY A TRUE BILL D. Ulric h FOREPERSON, GRAND JURY Date Signed: June 19, 2025"
+  },
+  "stipulations": [
+    {
+      "id": "stip_1",
+      "number": 1,
+      "content": "Other than issues related to MRE 404, 405, 608, and 609, any and all notice requirements and/or other discovery obligations pursuant to the MRE and Midlands Rules of Criminal Procedure have been satisfied by all parties."
+    },
+    {
+      "id": "stip_2",
+      "number": 2,
+      "content": "For the convenience of the parties, witnesses, court, and jury, all exhibits have been pre-labeled and pre-numbered. Those numbers will be used for all purposes at trial regardless of which party first offers the exhibit or the order in which the exhibits are offered."
+    },
+    {
+      "id": "stip_3",
+      "number": 3,
+      "content": "The Parties agree that Rob Armstrong, a 34-year -old male, died on April 6,"
+    },
+    {
+      "id": "stip_4",
+      "number": 4,
+      "content": "The Parties agree that no evidence exists that either Rob Armstrong or Charlie Martin were the victims of sexual assault or domestic violence, including dating violence."
+    },
+    {
+      "id": "stip_5",
+      "number": 5,
+      "content": "The Parties agree that Hotel Lux is located in Charlotte County, Midlands."
+    },
+    {
+      "id": "stip_6",
+      "number": 6,
+      "content": "The Parties agree that the affirmative defense of duress is not a valid legal defense in response to a murder charge."
+    },
+    {
+      "id": "stip_7",
+      "number": 7,
+      "content": "The Parties agree that all statements recorded via transcripts in this case were said by the person listed as the speaker of that statement. The transcripts are accurate reflections of the recorded conversations."
+    },
+    {
+      "id": "stip_8",
+      "number": 8,
+      "content": "The Parties agree that as part of the Episode 9 challenge, each contestant had an assigned color, and Rob Armstrong\u2019s assigned color was blue."
+    },
+    {
+      "id": "stip_9",
+      "number": 9,
+      "content": "The Parties agree that all of the information contained within Exhibit 5 is truthful and accurate."
+    },
+    {
+      "id": "stip_10",
+      "number": 10,
+      "content": "The Parties agree that they waive all objections to the admissibility of Exhibits 9, 10, 11, 12, 13,"
+    },
+    {
+      "id": "stip_11",
+      "number": 11,
+      "content": "The Parties agree that Exhibits 1, 8, 17, 22, are preadmitted as evidence without objections and may be referenced at any time during the trial starting with opening statements. Revised 01/05/26 2"
+    },
+    {
+      "id": "stip_12",
+      "number": 12,
+      "content": "The Parties agree that Exhibit 2 (Episode Guide), Exhibit 15 (Casting List, Season 10), and Exhibit 16 (Past Season Winners) truthfully and accurately describe the information contained therein."
+    },
+    {
+      "id": "stip_13",
+      "number": 13,
+      "content": "The Parties and witnesses waive all objections arising under the U.S. Constitution."
+    },
+    {
+      "id": "stip_14",
+      "number": 14,
+      "content": "Chain of custody was properly documented for all exhibits, and all exhibits have been properly preserved prior to trial. All notice requirements of MRE 902(11) and 902(12) have been satisfied for all exhibits."
+    },
+    {
+      "id": "stip_15",
+      "number": 15,
+      "content": "Exhibit 14 is a Material Safety Data Sheet (MSDS) for Oxalic Acid from the Midlands Product Safety Commission. A PDF version of this document was lawfully recovered from Charlie Martin\u2019s personal cell phone. An analysis of the document\u2019s metadata by digital forensic technicians determined that the PDF document was downloaded and saved on Martin\u2019s personal cell phone on January 8, 2025 at 9:46 am."
+    },
+    {
+      "id": "stip_16",
+      "number": 16,
+      "content": "The Parties agree that Charlie Martin\u2019s personal cell phone was not used at any point between February 1 and April"
+    },
+    {
+      "id": "stip_18",
+      "number": 18,
+      "content": "The Parties agree that prior to this case, the estate of Rob Armstrong filed a wrongful death claim against Selcov Studios. The parties settled prior to trial. While the terms of the settlement shall not be disclosed due to a non-disclosure agreement, that non-disclosure agreement does not limit any witness testimony in this case."
+    },
+    {
+      "id": "stip_19",
+      "number": 19,
+      "content": "The Parties agree that if Dr. Atlas Hartley is not called to testify as a witness, then Exhibits 3 and 4 are pre-admitted and may be referenced at any time during the trial starting with opening statements."
+    },
+    {
+      "id": "stip_20",
+      "number": 20,
+      "content": "All parties agree that Exhibit 31 (\u201cOxalic Acid Sample\u201d) is 2 grams of the same oxalic acid that was present in the storage room at the Hotel Lux from January through April of 202 5 during the filming of \u201cThe Saboteurs.\u201d"
+    },
+    {
+      "id": "stip_21",
+      "number": 21,
+      "content": "All parties agree that Exhibit 32 (the scoop recovered by police during the search of Charlie Martin\u2019s home) tested positive for trace amounts of oxalic acid when it was found."
+    }
+  ],
+  "jury_instructions": [
+    {
+      "id": "instruction_1",
+      "number": 1,
+      "title": "OFFENSE(S) CHARGED",
+      "content": "You will find the defendant guilty if, and only if, the government has proven beyond a reasonable doubt all of the elements of the offense(s) as listed in the attached Indictment."
+    },
+    {
+      "id": "instruction_2",
+      "number": 2,
+      "title": "STATE OF MIND DEFINITIONS",
+      "content": "A.Purposefully: A person acts purposefully if it is that person\u2019s conscious objective to engage in conduct of a certain nature or to cause a particular result, or that person is aware of attendant circumstances or believes or hopes they exist. B.Knowledge: A person acts knowingly if they are aware that their conduct willresult in a certain outcome. In other words, a defendant acts knowingly if they areaware that it is practically certain that their conduct will cause a specific result. Revised 01/05/26 2 C. Recklessly: A person acts recklessly if that person consciously disregards a substantial and unjustifiable risk that a particular result will occur because of that person\u2019s conduct. The risk must involve a gross deviation from the standard of conduct that a law -abiding person would observe in that situation. D. Negligently: A person acts negligently if that person should be aware of a substantial and unjustifiable risk that harm will result from that person\u2019s conduct. The risk must be of such a nature that the actor\u2019s failure to perceive it involves a gross deviation from the standard of care of a reasonable person in that situation."
+    },
+    {
+      "id": "instruction_3",
+      "number": 3,
+      "title": "OTHER RELEVANT DEFINITIONS",
+      "content": "A. Causation: A person\u2019s conduct is the legal cause of the result when: (a) the result would not have occurred but for the defendant\u2019s conduct; and (b) the risk of that result was the natural and foreseeable result of the defendant\u2019s conduct."
+    },
+    {
+      "id": "instruction_4",
+      "number": 4,
+      "title": "CRIMINAL HOMICIDE",
+      "content": "The State has charged the defendant with a single offense of murder. Criminal homicide constitutes murder when it is committed purposefully or knowingly; or it is committed recklessly under circumstances manifesting extreme indifference to the value of human life."
+    },
+    {
+      "id": "instruction_5",
+      "number": 5,
+      "title": "PRESUMPTION OF INNOCENCE",
+      "content": "The law presumes a defendant to be innocent of a crime, and the indictment shall not be considered as evidence or as having any weight against the defendant. You shall find the defendant not guilty unless you are satisfied from the evidence alone and beyond a reasonable doubt that the defendant is guilty. If upon the whole case you have a reasonable doubt as to guilt, you must find the defendant not guilty. Revised 01/05/26 3"
+    },
+    {
+      "id": "instruction_6",
+      "number": 6,
+      "title": "RIGHT TO REMAIN SILENT",
+      "content": "The defendant is not required to testify, and the fact that a defendant does not testify cannot be used as an inference of guilt."
+    },
+    {
+      "id": "instruction_7",
+      "number": 7,
+      "title": "ARGUMENTS AND REMARKS OF COUNSEL",
+      "content": "Remarks of the attorneys are not evidence. If the remarks suggest certain facts not in evidence, disregard those remarks. However, you are to consider carefully the closing arguments of the attorneys. Ultimately you must draw your own conclusions and decide your verdict according to the evidence, under the instructions given to you by the court."
+    },
+    {
+      "id": "instruction_8",
+      "number": 8,
+      "title": "CREDIBILITY OF WITNESSES",
+      "content": "It is the duty of the jury to scrutinize and weigh the testimony of witnesses and to determine the effect of the evidence as a whole. You are the sole judges of the credibility, that is, the believability, of the witnesses and of the weight to be given to their testimony. In determining the credibility of each witness and the weight to give the testimony of each witness, consider these factors: A.whether the witness has an interest or lack of interest in the result of this trial; B.the witness\u2019s conduct, appearance, and demeanor on the witness stand; C.the clearness or lack of clearness of the witness\u2019s recollections; D. the opportunity the witness had for observing and for knowing the matters the witness testified about; E.the reasonableness of the witness\u2019s testimony; F.the apparent intelligence of the witness; G.bias or prejudice, if any has been shown; H.possible motives for falsifying testimony; and I.all other facts and circumstances during the trial which tend either to support or to discredit the testimony. Then give to the testimony of each witness the weight you believe it should receive. There is no predetermined way for you to evaluate the testimony; instead, you should use your common sense and experience. Revised 01/05/26 4"
+    },
+    {
+      "id": "instruction_9",
+      "number": 9,
+      "title": "EVIDENCE; INTERPRETING EVIDENCE",
+      "content": "When making your decision, you may rely on both direct and circumstantial evidence. Direct evidence is testimony by a witness about what that witness personally did, saw, or heard. Circumstantial evidence is indirect evidence from which the fact finder may infer that another fact is true. Neither type of evidence should be given categorically more weight than the other. The State\u2019s burden of proving its case beyond a reasonable doubt applies to each and every element of the criminal offense charged. This burden, however, does not operate on the many subordinate, evidentiary, or incidental facts as distinguished from proof of the elements of the crime or of an ultimate fact. Where, however, the State relies in whole or in part on circumstantial evidence to prove an element of a crime, although each link in the chain of evidence need not be proven beyond a reasonable doubt, the cumulative impact of that evidence must, in order to support that inference, convince the finder of fact beyond a reasonable doubt that the element has been proven."
+    },
+    {
+      "id": "instruction_10",
+      "number": 10,
+      "title": "UNANIMOUS VERDICT",
+      "content": "The verdict of the jury must be unanimous as to whether the defendant is guilty or not guilty. Once you reach a verdict, the verdict form must be signed by each of you, and then you will notify my bailiff that a verdict has been reached. DATE: ___________________ _______________________ JUDGE Revised 01/05/26 1 DISTRICT COURT, CRIMINAL DIVISION CHARLOTTE COUNTY, MIDLANDS STATE OF MIDLANDS, * CASE NO.: CR25 -04-1009 Plaintiff, * * v. * * CHARLIE MARTIN, * Defendant. * * VERDICT _________ We, the jury, find Charlie Martin guilty of Murder, as charged in the indictment. _________ We, the jury, find Charlie Martin guilty of Negligent Homicide, a lesser-included offense. _________ We, the jury, find Charlie Martin not guilty. _________________ _________________ _________________ Juror #1 Juror #2 Juror #3 _________________ _________________ _________________ Juror #4 Juror #5 Juror #6 _________________ _________________ _________________ Juror #7 Juror #8 Juror #9 _________________ _________________ _________________ Juror #10 Juror #11 Juror #12"
+    }
+  ],
+  "motions_in_limine": [
+    {
+      "id": "motion_a",
+      "letter": "A",
+      "title": "Motion to exclude video evidence of The Saboteurs seasons 2 and",
+      "ruling": "10 Defendant filed a motion to exclude video episodes of the television program The Saboteurs seasons 2 and 10 under MRE 802 on the grounds that the footage of the episodes would contain inadmissible hearsay in the form of statements made from various competitors both in confessionals and during challenges and deliberations. Defendant further asserts that in the event such statements are not being offered for the truth of the matter asserted or otherwise meet a valid hearsay exception under MRE 803 or 804, such evidence would be substantially more unfairly prejudicial than probative given the highly edited nature of reality television program and thus should be excluded pursuant to MRE 403. The State filed a response claiming that the video evidence is critical to understanding the motives and actions of Defendant both in the original season they were on with the decedent as well as the current season filming at the time of decedent\u2019s death. This Court has weighed the arguments of both counsel and grants in part and denies in part Defendant\u2019s motion. Revised 01/05/26 2 1. The Court reviewed the footage put forward by State\u2019s counsel, specifically excerpts from Season 2, Episodes 1 through Episode 10, and Season 10, Episodes 1 through 8 along with the underwater camera footage from the Season 10, Episode 9 challenge. As to each section of footage, the Court finds as follows: a. Season 2 Footage : This Court finds that the parties may discuss the events of Season 2 pertaining to the relationships between relevant parties. The events of the show five years ago may have relevance as to the motivations or biases of parties and witnesses in the case. However, stopping trial to watch specific excerpts or read transcripts from the episodes would be a waste of time, result in a substantial number of objection arguments over specific statements from non -parties, and be unduly prejudicial pursuant to MRE 403. Nothing in this ruling prohibits either party from discussing firsthand recollections of this season through witness testimony. That witness testimony may be based on either participating in the show or watching the show on television, subject to other evidentiary objections that might be raised. b. Season 10 Episode Footage : The Court finds that the majority of scenes in the Season 10 episodes that aired are similarly inadmissible. The Court denies Defendant\u2019s motion to exclude excerpts from the show that directly reflect Defendant\u2019s own statements if offered by the State pursuant to MRE 801d2. The Court finds that the jury may have access to video excerpts of all such statements by the Defendant if introduced by the State during their deliberations. In order to maintain a timely trial schedule, however, witnesses and counsel must refer to the certified redacted transcripts of Season 10 episodes. Both parties should presume that any statements offered in the transcripts will be accessible in video format to the jury during deliberations. c. Underwater Camera Footage of the Final Challenge: The Court finds that the notes of the final challenge are a sufficient substitute for Revised 01/05/26 3 showing the footage of the final challenge during the trial. The Court is not persuaded by Defendant\u2019s argument that discussing such footage and/or showing such footage is a violation of MRE 403. The jury will have access to the footage during deliberations. And all parties with direct knowledge of the challenge may describe the challenge during testimony of witnesses and in statements to the jury. B. Preemptory Character Evidence The Court faces a pretrial motion by the State of Midlands to compel notice from Defendant of any character evidence of the accused or of the victim that Defendant intends to offer under Mid. R. Evid. 404(a). Defendant objected to the State\u2019s request for notice. In other jurisdictions, if the Defense elected to introduce character evidence under Mid. R. Evid. 404(a)(2), the State would be afforded the opportunity to offer rebuttal witness testimony following the Defense case -in-chief. However, for better or worse, Midlands\u2019s focus on judicial economy has created a unique local rule that prohibits the State from calling rebuttal witnesses. Therefore, this Court GRANTS the State\u2019s motion to compel and orders as follows: 1. Defendant must provide the State of Midlands with notice of any intent by Defendant to offer evidence of the character of Defendant or victim pursuant to R. 404(a)(2). Defendant must indicate the specific traits of character intended to be pursued. 2. Upon receipt of notice by Defendant that Defendant intends to offer evidence under R. 404(a)(2), the State of Midlands may elect to pursue \u201cpreemptive rebuttal evidence\u201d of competing traits during its case-in-chief. If Defendant does not provide notice of its intent to offer R. 404(a)(2) evidence, neither party may introduce such evidence at trial. 3. The State of Midlands must, as always, offer similar notice to Defendant regarding its intent to offer any evidence of prior crimes, wrongs, or acts, pursuant to R. 404(b). Revised 01/05/26 4 C. Admissibility of Interrogations The Court additionally considered a pretrial motion by Defendant to exclude the interrogation of the Defendant and Riley Kaye on constitutional grounds. This Court finds that (1) the Defendant\u2019s interrogation was conducted in a manner that did not infringe upon Defendant\u2019s constitutional rights; (2) Defendant knowingly and voluntarily waived all Fifth Amendment rights during the interrogation; and (3) Defendant does not have standing to challenge the constitutionality of Kaye\u2019s interrogation. Accordingly, the Court DENIES Defendant\u2019s motion. At trial, Defendant\u2019s interrogation or Kaye\u2019s interrogation may be read onto the record by counsel for either party or through a witness without additional foundation and at any point once the record is open until the defense team closes its case -in-chief. However, parties may object to particular parts of the interrogation on other evidentiary grounds. D. Defense\u2019s Motion to Exclude Social Media Posts Defendant filed a motion to exclude all social media posts under MRE 802 on the grounds that the statements within the social media posts would contain inadmissible hearsay. Defendant argued no further grounds for why the evidence would be inadmissible. In reply, the State argued that the social media posts are not being offered to prove the truth of the matter asserted within each post, and, therefore, cannot be hearsay. The Court agrees. The Defense\u2019s motion to exclude the social media posts is denied in part. Any social media posts admitted into evidence at trial will be admitted with a limiting instruction that they not be taken for the truth of the matter asserted therein but only for notice and the effect on the listener (the defendant)."
+    },
+    {
+      "id": "motion_e",
+      "letter": "E",
+      "title": "Motion to Exclude Opinions of Lin and Jha",
+      "ruling": "Both parties filed similar motions to exclude the opinion testimony of Dr. Micah Lin and Taylor Jha. The State argues that Dr. Micah Lin\u2019s opinions are inadmissible, while the Defendant argues that Taylor Jha\u2019s opinions are inadmissible. Neither motion is well taken. Revised 01/05/26 5 Dr. Lin\u2019s opinions are based on psychological tests that have consistently been held to be reliable by the Midlands Supreme Court. Accordingly, the State may not object under MRE 702(b) to the sufficiency of evidence or under 702(c) to the reliability of the methods Dr. Lin used in evaluating the Defendant. The credibility of Dr. Lin\u2019s conclusion and underlying facts are always relevant grounds for cross-examination. Taylor Jha presents a new consideration for this Court. Over the years, this Court has seen many different people claiming to be experts in a myriad of subjects. Each person has been evaluated individually as required by Midlands law, and so too must this Court analyze Jha\u2019s testimony based on the evidence presented in support of admitting Jha\u2019s conclusions. MRE 702 allows a person to be qualified as an expert based on specialized knowledge, experience, or training. During the evidentiary hearing on this matter, the Court received sufficient evidence to find that Taylor Jha is an expert in Reality TV production. The Court finds that MRE 702(a), (b), and (c) have been satisfied. As long as Jha\u2019s testimony is otherwise admissible pursuant to the MRE, Jha\u2019s testimony may be admitted as an expert opinion in Reality TV production, if so offered. F. Other Evidentiary Matters 1. Describing The Saboteurs Footage Both parties raised varying concerns about The Saboteurs video footage under MRE Articles IV, VIII, and X. All objections described within this Entry are denied. While this Court reserves the right to sustain objections to The Saboteurs video footage, this Court will not overturn its ruling on the admissibility of this footage on the following grounds: \u201cthe best evidence rule,\u201d hearsay, and MRE 403. A witness\u2019s description of what they viewed when watching video footage is not hearsay so long as that witness does not testify to statements heard on the video. A witness is allowed to describe what they saw; it is not hearsay. Statements from the video may be objected to as hearsay and will be addressed on an individual basis. Moreover, having a witness describe what they saw on a video does not violate MRE 403. The credibility of the testimony is always relevant grounds for cross examination. Revised 01/05/26 6 Finally, this Court will not entertain any objections under Article X regarding any of the footage from The Saboteurs. 2. Exhibits 2, 15, and 16 Hearsay objections were raised by both parties regarding premarked exhibits 2, 15, and 16 that were created by the S.O.S. podcast. Both parties\u2019 objections are noted for the record; however, the Court denies all hearsay objections to Exhibits 2, 15, and 16. If offered as evidence, and otherwise admissible, these exhibits will be admitted but with a limiting instruction to the jury that these exhibits are being offered for the limited purpose of notice of persons and events that existed on The Saboteurs, and should be read in conjunction with Stipulation 12. The parties shall not relitigate the evidentiary matters listed herein at trial. G. Legal Theories The Defense is prohibited from arguing the affirmative defense of duress. Duress is not a permissible defense in a murder trial. Defense is permitted to argue that the Defendant committed the lesser included offense of negligent homicide, if it so chooses. The Court finds that there are insufficient facts to support an affirmative defense of legal insanity. However, whether the Defendant was experiencing mental impairments that prevented them from having the requisite mens rea to commit murder at the time is an available means of defense to the charges. See State v. Bunker (2025). So Ordered, E. V. Lynne Hon. E. V. Lynne"
+    }
+  ],
+  "relevant_law": {
+    "statutes": [
+      {
+        "id": "statute_midlands_penal_code__18_101_culpability_defined",
+        "title": "Midlands Penal Code \u00a718-101 Culpability Defined",
+        "content": "(A) A person is not guilty of an offense unless that person acted purposefully, knowingly, recklessly, or negligently, as the law may require, with respect to each material element of the offense."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_102_purposefully_defined",
+        "title": "Midlands Penal Code \u00a718-102 Purposefully Defined",
+        "content": "(A) A person acts purposefully with respect to a material element of an offense when: (i) if the element involves the nature of that person\u2019s conduct or a result thereof, it is that person\u2019s conscious objective to engage in conduct of that nature or to cause such a result; and (ii) if the element involves the attendant circums tances, that person is aware of the existence of such circumstances or that person believes or hopes they exist."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_103_knowingly_defined",
+        "title": "Midlands Penal Code \u00a718-103 Knowingly Defined",
+        "content": "(A) A person acts knowingly with respect to a material element of an offense when: (i) if the element involves the nature of that person\u2019s conduct or the attendant circumstances, the person is aware that their conduct is of that nature or that such circumstanc es exist; and (ii) if the element involves a result of that person\u2019s conduct, the person is aware that it is practically certain that his conduct will cause such a result."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_104_recklessly_defined",
+        "title": "Midlands Penal Code \u00a718-104 Recklessly Defined",
+        "content": "(A) A person acts recklessly with respect to a material element of an offense when that person consciously disregards a substantial and unjustifiable risk that the material element exists or will result from that person\u2019s conduct. The risk must be of such a na ture and degree that, considering the nature and purpose of the actor\u2019s conduct and the known circumstances, its disregard involves a gross deviation from the standard of conduct that a law-abiding person would observe in the actor\u2019s situation."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_105_negligently_defined",
+        "title": "Midlands Penal Code \u00a718-105 Negligently Defined",
+        "content": "(A) A person acts negligently with respect to a material element of an offense when that person should be aware of a substantial and unjustifiable risk that the material element exists or will result from that person\u2019s conduct. The risk must be of such a nature and degree that the actor\u2019s failure to perceive it, considering the nature and purpose of the actor\u2019s conduct and the known circumstances, involves a gross deviation from the standard of care that a reasonable person would observe in the actor\u2019s situatio n. |"
+      },
+      {
+        "id": "statute_midlands_penal_code__18_201_causation",
+        "title": "Midlands Penal Code \u00a718-201 Causation",
+        "content": "(A) A defendant\u2019s conduct is the legal cause of the result when: (a) the result would not have occurred but for the defendant\u2019s conduct; and (b) the risk of that result was the natural and foreseeable result of the defendant\u2019s conduct. Revised 01/05/26 2"
+      },
+      {
+        "id": "statute_midlands_penal_code__18_301_criminal_homicide_defi",
+        "title": "Midlands Penal Code \u00a718-301 Criminal Homicide Defined",
+        "content": "(A) A person is guilty of criminal homicide if that person purposefully, knowingly, recklessly, or negligently causes the death of another human being. (B) Criminal homicide is murder, manslaughter, or negligent homicide."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_303_murder",
+        "title": "Midlands Penal Code \u00a718-303 Murder",
+        "content": "(A) Criminal homicide constitutes murder when: 1. it is committed purposefully or knowingly; or 2. it is committed recklessly under circumstances manifesting extreme indifference to the value of human life. (B) Murder is a felony of the first degree."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_304_manslaughter",
+        "title": "Midlands Penal Code \u00a718-304 Manslaughter",
+        "content": "(A) Criminal homicide constitutes manslaughter when it is committed recklessly. (B) Manslaughter is a felony of the second degree"
+      },
+      {
+        "id": "statute_midlands_penal_code__18_306_negligent_homicide",
+        "title": "Midlands Penal Code \u00a718-306 Negligent Homicide",
+        "content": "(A) Criminal homicide constitutes negligent homicide when it is committed negligently. (B) Negligent homicide is a felony of the third degree."
+      },
+      {
+        "id": "statute_midlands_penal_code__18_401_insanity_defense",
+        "title": "Midlands Penal Code \u00a718-401 Insanity Defense",
+        "content": "(A) A person is not responsible for criminal conduct if at the time of such conduct, as a result of mental disease or defect, that person lacks substantial capacity either to appreciate the criminality (wrongfulness) of their conduct or to conform their conduc t to the requirements of law. (B) As used in this Section, the terms \u201cmental disease or defect\u201d do not include an abnormality manifested only by repeated criminal or otherwise anti -social conduct, including, but not limited to, recidivists, psychopaths, and sociopaths. Revised 01/05/26 1"
+      }
+    ],
+    "cases": [
+      {
+        "id": "case_state_v__marquez__1975",
+        "citation": "State v. Marquez (1975)",
+        "content": "Defendant charged with offense requiring a mental state of \u201cknowingly\u201d argued that the evidence was insufficient because there was no indication she desired or hoped for a particular result. Held: Conviction affirmed. Although a defendant who acted purpose fully or who intended a particular result certainly acted knowingly, MPC \u00a7 18-103 makes clear there is no such requirement."
+      },
+      {
+        "id": "case_state_v__butler__1978",
+        "citation": "State v. Butler (1978)",
+        "content": "A trial court may not prevent a case of murder from going to the jury under an \u201cextreme reckless murder\u201d theory if the evidence, viewed as a whole, could be reasonably interpreted as showing the type of heightened recklessness that equates to purposeful or knowing homicide."
+      },
+      {
+        "id": "case_state_v__dawson__2012",
+        "citation": "State v. Dawson (2012)",
+        "content": "Defendant\u2019s conviction for reckless murder in a vehicular -homicide case was affirmed because \u201cthe facts show[ed] a marked deviation in degree away from the established standards of regard for life and the safety of others that is typically seen in the negl igent acts that cause most vehicular homicides.\u201d"
+      },
+      {
+        "id": "case_state_v__barrow__2018",
+        "citation": "State v. Barrow (2018)",
+        "content": "Defendant appeals his conviction for murder based on a violation of MPC \u00a718-303(A)(2). Defendant argues there was insufficient evidence of \u201cextreme recklessness\u201d to convict him of murder. MPC \u00a718-303(A)(2) prohibits the reckless killing of another person under circumstances manifesting extreme indifference to the value of human life. The legal concept behind this version of murder has been described as \u201cdeath by a thousand cuts.\u201d While the Court declines to adopt that phrase as a valid legal doctrine, the c oncept presented therein is apt. When a defendant commits a series of actions that may not, in and of themselves, evince a specific intent to kill the victim, that defendant can still be found guilty of murder if the cumulative harm of their actions shows an extreme indifference to the value of human life. For example, if a defendant purposefully or knowingly put poison in someone\u2019s food, that defendant would be guilty of murder. But if, instead, that defendant mistakenly gave someone peanuts when the defen dant knew that person had a peanut allergy, that defendant would be guilty of at least negligent homicide and perhaps manslaughter. However, if the defendant gave someone nonfatal doses of a toxic substance every day for an extended period of time and even tually the cumulative toxicity killed the person, the defendant would be guilty of murder under MPC \u00a718 -303(A)(2). Clearly, the repeated harmful actions by the defendant show greater culpability than accidental or unintentional poisoning. Because the actio ns of this defendant were a marked deviation from the standards of a law-abiding person, his actions were reckless, and the repeated injurious acts prove that the defendant manifested an extreme indifference to the value of human life. Revised 01/05/26 2"
+      },
+      {
+        "id": "case_state_v__durden__1996",
+        "citation": "State v. Durden (1996)",
+        "content": "Defendant appeals his conviction for mayhem and domestic terrorism on the grounds that he was found to be \u201ctemporarily insane\u201d at the time of the offenses. Midlands does not recognize \u201ctemporary insanity\u201d as a valid legal defense. However, a defendant shal l be permitted to present evidence of his mens rea at the time of the offense, subject to the MRE. The trial court erred to the prejudice of the defendant when it ruled that the defendant could not present any evidence about his state of \u201ctemporary insanity\u201d during trial. While a defendant shall not argue that he should be acquitted by reason of insanity based on a \u201ctemporary insanity\u201d defense, he may present evidence that calls into question his ability to form the requisite mens rea for the charged offense(s), subject to the MRE. Held: \u201cTemporary insanity\u201d is relevant evidence for the jury to consider even if it isn\u2019t a legal defense; case remanded for retrial."
+      },
+      {
+        "id": "case_state_v__arbuckle__2016",
+        "citation": "State v. Arbuckle (2016)",
+        "content": "Defendant appealed his conviction for murder pursuant to MPC 18 -303(A)(2). State argued that Defendant was guilty of murder because Defendant acted recklessly under circumstances that manifested an extreme indifference to human life, or what was known at c ommon law as depraved heart murder. Here, Defendant argues that the State failed to show this heightened mens rea and instead only established recklessness, which is the mens rea for manslaughter. We agree. Proving only that a defendant acted in a way that ignored an unjustifiable risk of harm, including loss of life of another, is insufficient evidence of depraved heart murder. That is recklessness. Depraved heart murder requires evidence that (1) the defendant acted reckless and (2) did so in a way that shows the defendant had an extreme indifference towards the value of human life. The most common way in which the State can prove a Defendant violated MPC 18 - 303(A)(2) is by proving the Defendant committed multiple reckless actions that had a high probability of causing severe bodily harm to another. Here, there was only one act of recklessness, and it was not sufficient proof, in itself, of an extreme indifference to life. Though nothing about this decision precludes one reckless act\u2014if otherwise sufficient proof of an extreme indifference to life\u2014from constituting depraved heart murder. Conviction overturned."
+      },
+      {
+        "id": "case_state_v__bernardi__2018",
+        "citation": "State v. Bernardi (2018)",
+        "content": "Defendant appealed her conviction for murder of an employee. Defendant was a high -level manager for a home construction contractor business. To say that safety of its employees was not a concern for the business is an understatement. Defendant now argues t hat she cannot be convicted for depraved heart murder because the CEO of the business told her to deny OSHA - required safety equipment and other PPE to employees. While that evidence may be used as mitigation evidence during sentencing, it is not dispositiv e on culpability. The Defendant\u2019s own acts and omissions are still relevant to establish her extreme indifference to human life under MPC 18-303(A)(2). Just because another may have acted with an extreme indifference to human life does not acquit the Defendant of her own bad acts. Criminal law does not acknowledge a comparative fault or contributory negligence defense. While an accused may offer evidence to rebut causation in a homicide cause, an accused is prohibited from arguing another person is more at fault for the victim\u2019s death (i.e. comparative fault or contributory negligence). Revised 01/05/26 3"
+      },
+      {
+        "id": "case_state_v__teglia__2025",
+        "citation": "State v. Teglia (2025)",
+        "content": "Defendant appeals her conviction for depraved heart murder. Defendant was a famous movie actor and director who worked for Pohlmann & Smith Production Studios. During the filming of a bank robbery scene in a movie that Defendant was directing, a prop gun was used. Unfortunately, the firearm was loaded with live ammunition and one of the cast members died from a gunshot wound. The production studio was found liable for wrongful death; however, the trial court prohibited the Defendant from presenting evidence of negligence or recklessness of cast members and production managers during Defendant\u2019s murder trial. Evidence of recklessness or negligence of others may be relevant to whether the Defendant knew or should have known that her actions or omissions had a high probability of causing severe bodily harm to another person. However, the actions of others are not dispositive on whether the Defendant manifested an extreme indifference to human life when evaluating the Defendant\u2019s actions independent of the additional negligent or reckless actions of a third party."
+      },
+      {
+        "id": "case_state_v__shepard__2025",
+        "citation": "State v. Shepard (2025)",
+        "content": "Defendant comes to the court for relief from judgment following a conviction for murder following a motor vehicle accident that caused the death of three individuals. Defendant was charged with murder after the prosecution put forth evidence that Defendan t had a B.A.C. of .23, was speeding in excess of 20 mph over the speed limit and texting while driving. Defendant is asking this Court to overturn his conviction and remand for a new trial because Defendant believes the trial court improperly excluded evi dence offered by the Defense regarding the Defendant\u2019s claim that the victims would not have died but for the subsequent negligent actions of the hospital emergency room staff. Specifically, the Defendant sought to include evidence that the emergency room physicians failed to properly diagnose head traumas and did not order a CT scan. As a result, two of the three patients died as a result of a brain bleed. The trial court found that the actions of the emergency room department after the accident occurred were not relevant to assess the material fact of whether Defendant\u2019s actions constituted an extreme indifference to the value of human life. Specifically, the trial court excluded the evidence because defendants \u201ctake their victims as they find them. \u201d We agree. While there may be some cases in which the subsequent intervening actions of a third party may impact whether the Defendant knew or should have known that their own actions could result in death, in this case it is well established common sense that driving dangerously could result in danger to other drivers or, as is the case here, pedestrians."
+      },
+      {
+        "id": "case_state_v__bunker__2025",
+        "citation": "State v. Bunker (2025)",
+        "content": "Defendant appeals his conviction for premeditated murder. Defendant entered a written plea of not guilty by reason of insanity; however, he was found to be legally sane at the time of the crime by a forensic psychologist. While temporary insanity is not a viable defense in the State of Midlands, a Defendant is always permitted to present, otherwise admissible, evidence of his inability to form the requisite mens rea. Such \u201cmental impairments\u201d are always relevant because such evidence helps the jury determin e whether the Defendant had the alleged mens rea to commit the charged offense. Revised 01/05/26 4 Burden of Proof & Presumption of Innocence"
+      },
+      {
+        "id": "case_state_v__rich__1904",
+        "citation": "State v. Rich (1904)",
+        "content": "In a criminal case, the burden is proof beyond a reasonable doubt with respect to each and every element of the charged offense(s). The burden is on the State and never shifts to the defendant."
+      },
+      {
+        "id": "case_state_v__smith__1981",
+        "citation": "State v. Smith (1981)",
+        "content": "The State\u2019s burden of proof applies to elements, not discrete facts. The question in every case is whether cumulative impact of the otherwise-admissible evidence is sufficient to convince the fact finder beyond a reasonable doubt that the element has been proven."
+      },
+      {
+        "id": "case_state_v__tamoe__2015",
+        "citation": "State v. Tamoe (2015)",
+        "content": "A criminal defendant is never required to present evidence or offer an alternative theory of the crime. If a defendant does so, however, a prosecutor may note the defense\u2019s failure to offer evidence in support of its theory of the case. Such comments do no t imply that the burden of proof has shifted to the defense, nor do they necessarily constitute an infringement on a defendant's exercise of the right to remain silent."
+      },
+      {
+        "id": "case_state_v__lazares__2016",
+        "citation": "State v. Lazares (2016)",
+        "content": "Criminal defendants have a constitutionally protected right to refuse to speak with police officers and to decline to testify in their own defense. No prosecutor or witness may comment (expressly or implicitly) on a defendant\u2019s exercise of either right or suggest that refusal to testify or termination of a police interrogation demonstrates consciousness of guilt."
+      },
+      {
+        "id": "case_state_v__chatterjee__2017",
+        "citation": "State v. Chatterjee (2017)",
+        "content": "If a criminal defendant chooses to testify, the defendant\u2019s credibility may be challenged just like that of any other witness. For that reason, it is not \u201cburden -shifting\u201d for a prosecutor to point out during cross-examination or summation that the defense has not produced documents or other evidence to support a theory or argument that has been advanced by the defense. The State may not, however, suggest that a defendant had an affirmative duty to produce any documents in order to be found not guilty. Trial Procedures"
+      },
+      {
+        "id": "case_state_v__haughey__2007",
+        "citation": "State v. Haughey (2007)",
+        "content": "In Midlands, all criminal trials are bifurcated with a guilt phase followed by a penalty phase."
+      },
+      {
+        "id": "case_state_v__deters__2009",
+        "citation": "State v. Deters (2009)",
+        "content": "During the guilt phase, evidence is not relevant if it is directed solely to the penalty to be given to the defendant if found guilty. It also is improper for an attorney to comment on sentencing or discuss potential penalties during the guilt phase of the trial. Such conduct is grounds for a mistrial and may constitute conduct for which sanctions are appropriate. Revised 01/05/26 5"
+      },
+      {
+        "id": "case_state_v__niehaus__2002",
+        "citation": "State v. Niehaus (2002)",
+        "content": "Under Midlands practice, both sides may always present evidence to prove or rebut any element of a charged offense. Neither side may object to such evidence on the ground that the objecting party is no longer pursuing (or challenging) the pertinent issue."
+      },
+      {
+        "id": "case_state_v__rittgers__1945",
+        "citation": "State v. Rittgers (1945)",
+        "content": "Unlike some jurisdictions, MRE 615 allows for the sequestration of the lead investigating officer in a criminal case if that law enforcement officer is not elected to be the government\u2019s representative during pretrial matters."
+      },
+      {
+        "id": "case_state_v__singh__2019",
+        "citation": "State v. Singh (2019)",
+        "content": "Venue and identification of the defendant are necessary elements of every criminal prosecution. Because Midlands does not permit motions for acquittal, the defense closing argument is the proper place to bring it to the court\u2019s attention that the prosecuto r has failed to prove these necessary elements of the charged offense. Ahmed v. O\u2019Keeffe (2014) Civil case arising from alleged assault. The plaintiff was called as a witness and testified fully on direct examination. On cross examination, however, the plaintiff failed to respond to some questions, purportedly because of a condition arising from the assault. Held: The judgment for the plaintiff must be reversed. The reason why the witness failed to respond to questions on cross examination is immaterial. If a witness becomes unable or unwilling to respond to otherwise proper questions on cross examination, the trial court must strike the witness\u2019s testimony in its entirety. Character Evidence"
+      },
+      {
+        "id": "case_state_v__nakajima__1986",
+        "citation": "State v. Nakajima (1986)",
+        "content": "Under MRE Rule 404, general evidence of a defendant\u2019s good character or law -abiding nature is not admissible. However, under Rule 404(a)(1), a criminal defendant may offer certain evidence of a \u201cpertinent\u201d character trait. The requirement that evidence be \u201cpertinent\u201d significantly exceeds the comparably low bar of relevancy. \u201cPertinence\u201d is a more exacting standard by which the trait itself must directly relate to a particular element or facet of the crime charged. Estate of Hamilton v. Walton (2009) Testimony about a psychological condition does not constitute \u201c[e]vidence of a person\u2019s character or character trait,\u201d the only evidence excluded by MRE 404(a)(1). The fact that a person suffers from a medically recognized psychological disorder is not cha racter evidence any more than the fact that a person has a physical condition that would make it easier or harder for them to perform a given act. Revised 01/05/26 6"
+      },
+      {
+        "id": "case_ellis_v__norton__1999",
+        "citation": "Ellis v. Norton (1999)",
+        "content": "Testimony about an individual\u2019s willingness to strain or \u201cpush\u201d themselves mentally, physically, or both to finish a task does not constitute \u201c[e]vidence of a person\u2019s character or character trait,\u201d the only evidence excluded by MRE 404(a)(1). General discussions of a person\u2019s resolve or pluckiness does not constitute improper character evidence. Grounds & Basis for Evidentiary Rulings"
+      },
+      {
+        "id": "case_state_v__wiseman__1975",
+        "citation": "State v. Wiseman (1975)",
+        "content": "The beyond-a-reasonable-doubt burden does not apply to threshold matters involving the admissibility of evidence. In Midlands, the proponent of evidence need only prove these evidentiary matters by a preponderance of the evidence (i.e., it must establish t hat all elements are more likely than not true)."
+      },
+      {
+        "id": "case_zomerfeld_v__noto__2012",
+        "citation": "Zomerfeld v. Noto (2012)",
+        "content": "Under MRE 104(a), when evaluating the admissibility of evidence, a trial court is permitted to rely on both admissible and inadmissible evidence. The use of underlying inadmissible evidence does not make that inadmissible evidence admissible. Instead, the court is permitted to consider the underlying inadmissible evidence to assess the admissibility of the offered evidence. In a jury trial, the jury may not always be privy to the underlying facts used to determine what evidence is admissible, but the Court may hear it. Previously upheld examples include using character evidence to make a ruling on hearsay exceptions, using hearsay to make a ruling on character evidence, and using hearsay to decide whether an expert has adequate foundation to testify."
+      },
+      {
+        "id": "case_state_v__watt__1983",
+        "citation": "State v. Watt (1983)",
+        "content": "Under MRE 104(a), courts may consider custodial documents, such as clerks\u2019 certifications or affidavits of records keepers, when determining the admissibility of other evidence without regard for the admissibility of the custodial document itself. The cust odial document typically only addresses preliminary matters of admissibility and is not entered into evidence. Authentication Kennedy v. Kennedy-Jones (2005) As long as the proponent of the statement produces evidence that would permit a reasonable jury to find, by a preponderance of the evidence, that a given person made a particular statement, a court assessing admissibility must assume that the statement was made by that person."
+      },
+      {
+        "id": "case_ginger_v__heisman__2015",
+        "citation": "Ginger v. Heisman (2015)",
+        "content": "Absent particularized reason to believe that the communication may have been sent by someone else, the fact that an electronic communication (an email, text, or social media post) is listed as coming from a number or account that is either known or purport s to belong to a particular person is sufficient foundation that the communication was sent by the person. Revised 01/05/26 7 Experts"
+      },
+      {
+        "id": "case_davis_v__adams__1993",
+        "citation": "Davis v. Adams (1993)",
+        "content": "Trial judges must ensure that any scientific testimony or evidence admitted is not only relevant but reliable. In determining reliability, judges should consider only the methods employed and the data relied upon, not the conclusions themselves. The proponent of the evidence has the burden of proving each section of Rule 702 by a preponderance of the evid ence. Tarot Readers Association of Midlands v. Merrell Dow (1994) In assessing reliability under Rule 702(C), judges should consider whether the theory or technique has been or can be tested, whether it has been subjected to peer review and publication, whether it has a known error rate, and whether it has gained widespr ead acceptance within the field. These factors, while relevant, are not necessarily dispositive. For example, lack of publication does not automatically foreclose admission; sometimes well -grounded but innovative theories will not have been published. Ther e is no definitive checklist. Judges must make such assessments based on the totality of the circumstances."
+      },
+      {
+        "id": "case_richards_v__mississippi_bbq__1997",
+        "citation": "Richards v. Mississippi BBQ (1997)",
+        "content": "Midlands Rule of Evidence 703 does not permit experts to testify or to present a chart in a manner that simply summarizes inadmissible hearsay without first relating that hearsay to some specialized knowledge on the expert\u2019s part. The court must distinguis h experts relying on otherwise inadmissible hearsay to form scientific conclusions from conduits who merely repeat what they are told. The testimony of the former is admissible; that of the latter is not. Of course, statements that would otherwise be admis sible are not inadmissible simply because they are offered by or through an expert witness."
+      },
+      {
+        "id": "case_state_v__richardson__2017",
+        "citation": "State v. Richardson (2017)",
+        "content": "It was not an abuse of discretion for the trial court to allow the forensic pathologist to testify to the cause and manner of death even though the pathologist was not tendered as an expert prior to providing her testimony. Unlike other jurisdictions, Midlands does not require a party to \u201ctender an expert\u201d before eliciting an expert opinion. Whether MRE 702 foundational requirements have been satisfied is an evidentiary determination that rests within the sound discretion of the trial court. Kane Software Co. v. Mars Investigations (1998) Midlands does not permit parties to use their experts as weapons in a trial by ambush or unfair surprise. Expert reports that are exchanged prior to trial must contain a complete statement of all opinions the expert will testify to and the basis and reason s for them, the facts or data considered by the expert in forming their opinions, and the expert\u2019s qualifications. Experts are strictly prohibited from testifying on direct and redirect examination about any opinions or conclusions not stated in their report, and such testimony must be excluded upon a timely objection from opposing counsel. For example, an expert may not testify on direct or redirect examination that they formed a conclusion based on evidence that came out during trial that the expert did n ot previously review. However, if an expert is asked during cross examination about matters not contained in their report, the expert may freely answer the question as long as the answer is responsive. When an objection is made under Kane Software, the tri al court should ask the Revised 01/05/26 8 proponent of the testimony to refer the trial court to where the proposed testimony is contained or otherwise referenced in the expert\u2019s disclosure to ensure that the record is clear. Yu-Oh Industries v. Beckstein Alekri Inc. (2000) Appellants argue that the trial court improperly excluded testimony from the defense expert on the basis that certain testimony amounted to \u201ctrial by ambush\u201d under the precedent set by Kane Software Co. v. Mars Investigations (1998). Appellants admit that the defense expert was attempting to testify to certain underlying facts that were not expressly disclosed in the expert report and that such facts contributed to the expert\u2019s conclusions, but they argue that the conclusion itself was disclosed and thus it was unnecessary for every underlying detail to be disclosed. We hold that the Appellants\u2019 argument has merit. Experts should not be expected to include in their reports every basic scientific fact known to lay people and known realities of their expertise that support their conclusion. Similarly, experts should not be expected to include in their reports every underlying fact from a specific document so long as the experts explicitly disclosed that they relied upon that document in forming their opinions a nd that document was made available to the other party through discovery. Such requirements would lead to expert reports that are hundreds, if not thousands, of pages long. For example, an accident reconstructionist need not explain Newton\u2019s laws of motion in their report. However, if an expert wishes to testify that they believe the indentations on a vehicle\u2019s door means that the vehicle collided with a streetlamp at 45 MPH, then measurements, equations, and other relevant facts that form the basis for that specific conclusion must be disclosed in the expert\u2019s report."
+      },
+      {
+        "id": "case_jeffries_v__polk_county_police_department__2007",
+        "citation": "Jeffries v. Polk County Police Department (2007)",
+        "content": "Generally, law enforcement officers are not \u201cexperts\u201d subject to MRE 702 or this Court\u2019s holding in Tarot Readers Association of Midlands v. Merrell Dow (1994) and its progeny. However, law enforcement officers may have specialized training, skills, and ex perience beyond the average citizen as contemplated in MRE 701 and may testify based on such specialized knowledge. Insofar as a law enforcement officer is asked to provide an opinion based on that officer\u2019s general training, skills, and experience as a la w enforcement officer (e.g., whether the officer followed standard protocol in collecting evidence), the admissibility thresholds of MRE 702 and Tarot Readers do not apply. Rather, the admissibility of a law enforcement officer\u2019s non-expert opinion is subject to the standards of MRE 701 and any other applicable rule of evidence. Omnidirectional Solutions v. Little Bird Word LLC (2023) It was never the intention of this Court for its holding in Tarot Readers Association of Midlands v. Merrell Dow (1994) and its progeny to create a rigid and unyielding standard for expert opinions. So long as the expert can sufficiently explain their expertise, training, and method for review, Tarot Readers Assoc. shall not be used by trial courts to prohibit otherw ise credible and admissible opinions simply because there is not a known error rate or prior peer review of the expert\u2019s analysis. Such questions and potential challenges of credibility are better left to cross examination. Revised 01/05/26 9 Hearsay America\u2019s Best Cookie v. International House of Waffles (2009) The Court recognizes that practices differ in other jurisdictions. But, in Midlands, the definition of \u201chearsay\u201d includes out-of-court statements by a witness who is on the stand or by another person who has or will be testifying in a particular trial."
+      },
+      {
+        "id": "case_state_v__tate__1987",
+        "citation": "State v. Tate (1987)",
+        "content": "Midlands Rule of Evidence 801(d)(2) may be invoked in only one direction in a criminal case. Specifically, Rule 801(d)(2) permits the State to offer statements by a criminal defendant. Subject to MRE 106, Rule 801(d)(2) does not permit the defense to offer the defendant\u2019s own statements, even if the State has already elicited other out -of-court statements by a defendant during a preceding examination."
+      },
+      {
+        "id": "case_homel_v__arnzen__2015",
+        "citation": "Homel v. Arnzen (2015)",
+        "content": "For purposes of MRE 801(d)(2), police officers, prosecutors, informants, and others working with law enforcement officials are not an \u201copposing party\u201d of a criminal defendant."
+      },
+      {
+        "id": "case_state_v__hilton__1985",
+        "citation": "State v. Hilton (1985)",
+        "content": "MRE 801(d)(2) governs statements \u201coffered against an opposing party.\u201d This rule does not require the proponent of the evidence to offer the statement \u201cagainst the party\u2019s interests\u201d in order to qualify as an exemption to hearsay under MRE 801(d)(2) \u2013 that language is notably only found in MRE 804(b)(3). If the drafters of the MRE had wanted 801(d)(2) to only apply if the statement was \u201cagainst the party\u2019s interest,\u201d it would have drafted the rule as such."
+      },
+      {
+        "id": "case_state_v__smarda__2005",
+        "citation": "State v. Smarda (2005)",
+        "content": "A witness testifying to their own recollection of what they saw occur on a video recording cannot be hearsay. Here, the defendant\u2019s description of what she viewed happening (e.g. people\u2019s movements and interactions) during a movie \u201couttake\u201d video is not he arsay. However, it may be a violation of MRE 802 if a witness testifies to statements they heard or saw on the video depending on whether the statements met the definition of hearsay or if an exception to the hearsay rule applied."
+      },
+      {
+        "id": "case_state_v__bowling__2004",
+        "citation": "State v. Bowling (2004)",
+        "content": "For statements offered pursuant to MRE 801(d)(2)(E), the proof of the conspiracy need only be shown by a preponderance standard. Given that the Midlands Rules of Criminal procedure do not permit recalling witnesses, the proponent of the evidence may reques t that a statement be admitted conditionally so that further foundation of the conspiracy can be developed through other witnesses. Whether the evidence will be admitted conditionally is within the sound discretion of the trial court. Chambers v. By the Book Publishing, Ltd. (2015) The hearsay rule is only implicated where an out -of-court statement is being used for the truth of the matter asserted. If it only matters whether the out -of-court statement was made (not whether it was true), then the hearsay rule is not implicated. Revised 01/05/26 10 State v. B.F. De la Porta (2024) Defendant offered statements of the investigating agent (\u201cI know that you did this. You\u2019re a mastermind and this is exactly the type of job that you would pull . . . and now you\u2019re gonna be mine\u201d) to show bias in the investigation. The State objected to he arsay, arguing the \u201ctruth value\u201d\u2014 that which the Defense wished the jury to infer from the statement \u2014was that the Agent was out to get the Defendant and that was the purpose for which the Defense was entering it. Held : To be inadmissible as hearsay, an out-of-court statement must be (a) an assertion of fact (b) offered to establish the truth of that asserted fact. No part of the rule against hearsay concerns itself with the \u201ctruth value\u201d of an out-of-court statement beyond the fact asserted in the statement. The statement here contains several assertions of fact \u2014that the investigating agent knew the Defendant was involved; that the Defendant was a mastermind and that the heist was of the sort the Defendant would commit; and that the Defendant would be his. Because the Defense disputed these assertions, it cannot be reasonably argued that any part of the Agent\u2019s statement was offered to prove the truth of the matter(s) asserted. As such, the statement is definitionally not hearsay. Causation"
+      },
+      {
+        "id": "case_state_v__desiato__2020",
+        "citation": "State v. Desiato (2020)",
+        "content": "Under traditional common law, a defendant could be found liable for the death of a victim if that victim died within a year and a day from the injury suffered at the hands of the defendant. The idea being that the victim\u2019s cause of death was still directly and proximately caused by the defendant within that timeframe. We see no reason to divert from the common law \u201cyear plus one day\u201d framework. Held: In a criminal homicide case, the prosecutor must prove, beyond a reasonable doubt, that the defendant\u2019s volitional act was the direct and foreseeable cause of the victim\u2019s death."
+      },
+      {
+        "id": "case_state_v__rodgers__2014",
+        "citation": "State v. Rodgers (2014)",
+        "content": "Defendant argues that the trial court should not have instructed the jury that he conceded causation when he conceded negligence. The trial court\u2019s instruction was proper. It is axiomatic that causation is an element of negligence. Conviction affirmed."
+      },
+      {
+        "id": "case_spear_v__vietnam_travel_agency__2016",
+        "citation": "Spear v. Vietnam Travel Agency (2016)",
+        "content": "Plaintiff appeals the trial court's granting of summary judgment in favor of Defendant. Plaintiff argues that he had no duty to protect himself from harm. While Midlands law does not impose an affirmative duty to save others, Midlands law does require someone to protect themselves from obvious harm. Appeal denied."
+      },
+      {
+        "id": "case_state_v__narsipur__2025",
+        "citation": "State v. Narsipur (2025)",
+        "content": "Defendant appeals his conviction for manslaughter on the grounds that the judge improperly instructed the jury that causation is an objective standard. Defendant\u2019s argument is not well taken. Courts do not adjust foreseeability downward because a defendan t was distracted, anxious, carless, or ignorant. Causation is an objective not subjective standard. While a whether a defendant was anxious, distracted, or ignorant of certain facts are pertinent considerations when arguing the defendant\u2019s mental state, bu t not when addressing causation. Conviction affirmed."
+      }
+    ]
+  },
+  "exhibits": [
+    {
+      "id": "exhibit_1",
+      "exhibit_number": "1",
+      "title": "The Saboteurs , Pitch Deck",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_2",
+      "exhibit_number": "2",
+      "title": "The Saboteurs , Episode",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_3",
+      "exhibit_number": "3",
+      "title": "Autopsy Report by Dr. A.",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_4",
+      "exhibit_number": "4",
+      "title": "Toxicology Report by Dr. A. Hartley",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_5",
+      "exhibit_number": "5",
+      "title": "Footage Review Notes by Dr. A. Hartley",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_6",
+      "exhibit_number": "6",
+      "title": "Interrogation of Riley Kaye",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_7",
+      "exhibit_number": "7",
+      "title": "Interrogation of Charlie Martin",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_8",
+      "exhibit_number": "8",
+      "title": "Photograph of Hotel (Exterior)",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_9",
+      "exhibit_number": "9",
+      "title": "Photograph of Hotel (Hidden Door)",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_10",
+      "exhibit_number": "10",
+      "title": "Photograph of Rob\u2019s Blue Backpack (Season 10, Episode 9)",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_11",
+      "exhibit_number": "11",
+      "title": "Photograph of Scuba Tank",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_12",
+      "exhibit_number": "12",
+      "title": "The Saboteurs , All- Stars",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_13",
+      "exhibit_number": "13",
+      "title": "Oxalic Acid Label",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_14",
+      "exhibit_number": "14",
+      "title": "Oxalic Acid MSDS",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_15",
+      "exhibit_number": "15",
+      "title": "The Saboteurs Casting List,",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_17",
+      "exhibit_number": "17",
+      "title": "Social Media Posts",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_18",
+      "exhibit_number": "18",
+      "title": "Charlie Martin Text",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_19",
+      "exhibit_number": "19",
+      "title": "Riley Kaye Text Messages",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_20",
+      "exhibit_number": "20",
+      "title": "Diagram of Land Challenge",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_21",
+      "exhibit_number": "21",
+      "title": "Production Notes for",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_22",
+      "exhibit_number": "22",
+      "title": "Photograph of Water",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_23",
+      "exhibit_number": "23",
+      "title": "Charlie Martin Social",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_24",
+      "exhibit_number": "24",
+      "title": "The Saboteurs, Episode",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_25",
+      "exhibit_number": "25",
+      "title": "Charlie Martin Preseason",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_26",
+      "exhibit_number": "26",
+      "title": "Charlie Martin",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_27",
+      "exhibit_number": "27",
+      "title": "CV of Dr. Atlas Hartley",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_28",
+      "exhibit_number": "28",
+      "title": "CV of Dr. Grey Marlowe",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_29",
+      "exhibit_number": "29",
+      "title": "CV of Micah Lin",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_30",
+      "exhibit_number": "30",
+      "title": "Photograph of Rob Armstrong (team provided)",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_31",
+      "exhibit_number": "31",
+      "title": "Oxalic Acid Sample",
+      "content_type": "document"
+    },
+    {
+      "id": "exhibit_32",
+      "exhibit_number": "32",
+      "title": "Oxalic Acid Scoop",
+      "content_type": "document"
+    }
+  ],
+  "witnesses": [
+    {
+      "id": "witness_indigo_quade",
+      "name": "INDIGO QUADE",
+      "document_type": "affidavit",
+      "called_by": "either",
+      "role_description": "The Saboteurs Host",
+      "start_page": 134,
+      "end_page": 144,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF INDIGO QUADE 1 \nAfter being duly sworn upon oath, Indigo Quade hereby states as follows: I am over 18 2 \nand competent to make this affidavit.  3 \nMy name is Indigo Quade. You probably know me as the new host for Amtazon Prime\u2019s 4 \ntop reality show The Saboteurs or as one of the contestants from Season 5: The Saboteurs: Back 5 \nto Basics. I\u2019ve always had show business in my veins. I was a star on a Princess Beads 6 \ncommercial as a kid (\u201clook Ma, they\u2019re just...",
+      "affidavit_length": 30879
+    },
+    {
+      "id": "witness_rowan_patel",
+      "name": "ROWAN PATEL",
+      "document_type": "affidavit",
+      "called_by": "prosecution",
+      "role_description": "Challenge Designer",
+      "start_page": 145,
+      "end_page": 155,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF ROWAN PATEL 1 \nAfter being duly sworn upon oath, Rowan Patel hereby states as follows: I am over 18 2 \nand competent to make this affidavit.  3 \nMy name is Rowan Patel. I was raised in Los Angeles and always loved the film industry. 4 \nI never had any draw to books or music so much as I was drawn to visual storytelling. Television 5 \nor film made no difference to me: it was absolute magic. I knew there was nothing else I wanted 6 \nto do. I didn\u2019t have the fac...",
+      "affidavit_length": 31739
+    },
+    {
+      "id": "witness_nel_doos",
+      "name": "NEL DOOS",
+      "document_type": "affidavit",
+      "called_by": "either",
+      "role_description": "The Saboteurs  Contestant",
+      "start_page": 156,
+      "end_page": 169,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF NEL DOOS 1 \nAfter being duly sworn upon oath, Nel Doos hereby states as follows: I am over 18 and 2 \ncompetent to make this affidavit.  3 \nMy name is Nel Doos. Do not call me \u201cNelly.\u201d Yes, I am the sibling of the famous social 4 \nmedia influencer, but we haven\u2019t been on speaking terms for years. My sibling thinks that they 5 \nare the only person in our family who is worthy enough of being Midlands\u2019s number one 6 \ncelebrity. I am going to prove them wrong, and...",
+      "affidavit_length": 38784
+    },
+    {
+      "id": "witness_taylor_jha",
+      "name": "TAYLOR JHA",
+      "document_type": "affidavit",
+      "called_by": "either",
+      "role_description": "Podcaster",
+      "start_page": 170,
+      "end_page": 183,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF TAYLOR JHA 1 \nAfter being duly sworn upon oath, Taylor Jha hereby states as follows: I am over 18 and 2 \ncompetent to make this affidavit.  3 \nMy name is Taylor Jha. I have lived in a lot of places, but I currently live in Santa Ivo, 4 \nMidlands. I have a bachelor's degree in broadcast journalism from the University of Missouri in 5 \n2012 and a master\u2019s degree in broadcast journalism from the University of Southern California in 6 \n2014. When people ask me wh...",
+      "affidavit_length": 40581
+    },
+    {
+      "id": "witness_riley_kaye",
+      "name": "RILEY KAYE",
+      "document_type": "affidavit",
+      "called_by": "prosecution",
+      "role_description": "The Saboteurs Producer",
+      "start_page": 184,
+      "end_page": 198,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF RILEY KAYE 1 \nAfter being duly sworn upon oath, Riley Kaye hereby states as follows: I am over 18 and 2 \ncompetent to make this affidavit.  3 \nMy name is Riley Kaye. I am making this affidavit in conjunction with the United States 4 \nAttorney\u2019s Office and the Attorney General\u2019s Office for the State of Midlands. On July 23, 2025, 5 \nI entered a guilty plea to federal charges related to tampering with the outcome of a game show 6 \n(in violation of 47 U.S.C. 509...",
+      "affidavit_length": 42855
+    },
+    {
+      "id": "witness_taren_rivera",
+      "name": "TAREN RIVERA",
+      "document_type": "affidavit",
+      "called_by": "prosecution",
+      "role_description": "Federal Investigator",
+      "start_page": 199,
+      "end_page": 214,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1     1 \nAFFIDAVIT OF TAREN RIVERA 2 \nAfter being duly sworn upon oath, Taren Rivera hereby states as follows: I am over 18 3 \nand competent to make this affidavit. I am testifying voluntarily and was not subpoenaed or 4 \ncompelled to testify. 5 \nI am Investigator Taren Rivera, and I am an agent with the Federal Bureau of 6 \nInvestigation.  Although I work with the Bureau, I have been on assignment in a special task 7 \nforce within the Federal Trade Commission (\u201cFTC\u201d) for t...",
+      "affidavit_length": 44548
+    },
+    {
+      "id": "witness_lennox_reynolds",
+      "name": "LENNOX REYNOLDS",
+      "document_type": "affidavit",
+      "called_by": "either",
+      "role_description": "Caretaker",
+      "start_page": 215,
+      "end_page": 226,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF LENNOX REYNOLDS 1 \nAfter being duly sworn upon oath, Lennox Reynolds hereby states as follows: I am over 2 \n18 and competent to make this affidavit.  3 \nMy name is Lennox Reynolds. For the past twenty years, I\u2019ve been working as a 4 \ncaretaker at the Hotel Lux. Since it\u2019s a hoity -toity fancy hotel, they call us caretakers instead of 5 \nhousekeepers, but the jobs are largely the same. My job at the Lux included working during 6 \nSeason 10 of The Saboteurs, wh...",
+      "affidavit_length": 32936
+    },
+    {
+      "id": "witness_atlas_hartley__md",
+      "name": "ATLAS HARTLEY, MD",
+      "document_type": "affidavit",
+      "called_by": "prosecution",
+      "role_description": "Medical Examiner",
+      "start_page": 227,
+      "end_page": 229,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 AFFIDAVIT OF ATLAS HARTLEY, MD 1 \nAfter being duly sworn upon oath, Atlas Hartley hereby states as follows: I am over 18 and 2 \ncompetent to make this affidavit.  3 \nI am making this affidavit to supplement my report and identify the relevant exhibits that 4 \nI am familiar with in this case. Of the exhibits in this case, I am familiar with the following:  5 \nExhibit 3 the autopsy I performed on Rob Armstrong at the Charlotte County Medical 6 \nExaminer\u2019s Office on April 8,...",
+      "affidavit_length": 5284
+    },
+    {
+      "id": "witness_grey_marlowe",
+      "name": "Grey Marlowe",
+      "document_type": "report",
+      "called_by": "defense",
+      "role_description": "Physician",
+      "start_page": 230,
+      "end_page": 238,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 Expert Report of Dr. Grey Marlowe, MD State v. Martin Case 1 \nJuly 11, 2025 2 \n 3 \nI am a Board-certified sports medicine physician with over two decades of 4 \nclinical, forensic, and research experience, specializing in the biochemical effects of 5 \noverexertion, including dehydration, electrolyte imbalance, and metabolic collapse. I am 6 \nalso the former Chief Team Physician for the Midlands Meteors (a professional 7 \nbasketball team), with deep expertise in athlete per...",
+      "affidavit_length": 25660
+    },
+    {
+      "id": "witness_micah_lin",
+      "name": "Micah Lin",
+      "document_type": "report",
+      "called_by": "defense",
+      "role_description": "Clinical Psychologist",
+      "start_page": 239,
+      "end_page": 251,
+      "key_facts": [],
+      "affidavit_preview": "Revised 01/05/26 \n \n \n1 FORENSIC EVALUATION CENTER OF MIDLANDS  1 \nFORENSIC\tEVALUATION \t 2 \n 3 \nName:\tCharlie\tMartin\t Examiner:\tMicah\tLin,\tPsy.D\t 4 \nDate\tof\tBirth:\tApril\t20,\t1990\t Date\tof\tEvaluation:\t July\t14\t2025\t 5 \nCourt\tCase\tNo:\tCR25-04-1009\t Date\tof\tReport:\t July\t15,\t2025\t 6 \nCounty:\tCharlotte,\tMidlands\t 7 \n 8 \nReferral\tInformation:\t 9 \nCharlie\tMartin\twas\treferred\tto\tthe\tForensic\tEvaluation\tCenter\t(FEC)\tby\tdefense\t 10 \ncounsel\tfor\ta\tpsychological\tevaluation\trelated\tto\tCR25 -04-1009\tin\tthe\tD...",
+      "affidavit_length": 34338
+    }
+  ],
+  "legal_standards": [
+    {
+      "id": "instruction_1",
+      "content": "OFFENSE(S) CHARGED: You will find the defendant guilty if, and only if, the government has proven beyond a reasonable doubt all of the elements of the offense(s) as listed in the attached Indictment.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_2",
+      "content": "STATE OF MIND DEFINITIONS: A.Purposefully: A person acts purposefully if it is that person\u2019s conscious objective to engage in conduct of a certain nature or to cause a particular result, or that person is aware of attendant circumstances or believes or hopes they exist. B.Knowledge: A person acts knowingly if they are aware that their conduct willresult in a certain outcome. In other words, a defendant acts knowingly if they areaware that it is practically certain that their conduct will cause a specific result. Revised 01/05/26 2 C. Recklessly: A person acts recklessly if that person consciously disregards a substantial and unjustifiable risk that a particular result will occur because of that person\u2019s conduct. The risk must involve a gross deviation from the standard of conduct that a law -abiding person would observe in that situation. D. Negligently: A person acts negligently if that person should be aware of a substantial and unjustifiable risk that harm will result from that person\u2019s conduct. The risk must be of such a nature that the actor\u2019s failure to perceive it involves a gross deviation from the standard of care of a reasonable person in that situation.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_3",
+      "content": "OTHER RELEVANT DEFINITIONS: A. Causation: A person\u2019s conduct is the legal cause of the result when: (a) the result would not have occurred but for the defendant\u2019s conduct; and (b) the risk of that result was the natural and foreseeable result of the defendant\u2019s conduct.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_4",
+      "content": "CRIMINAL HOMICIDE: The State has charged the defendant with a single offense of murder. Criminal homicide constitutes murder when it is committed purposefully or knowingly; or it is committed recklessly under circumstances manifesting extreme indifference to the value of human life.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_5",
+      "content": "PRESUMPTION OF INNOCENCE: The law presumes a defendant to be innocent of a crime, and the indictment shall not be considered as evidence or as having any weight against the defendant. You shall find the defendant not guilty unless you are satisfied from the evidence alone and beyond a reasonable doubt that the defendant is guilty. If upon the whole case you have a reasonable doubt as to guilt, you must find the defendant not guilty. Revised 01/05/26 3",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_6",
+      "content": "RIGHT TO REMAIN SILENT: The defendant is not required to testify, and the fact that a defendant does not testify cannot be used as an inference of guilt.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_7",
+      "content": "ARGUMENTS AND REMARKS OF COUNSEL: Remarks of the attorneys are not evidence. If the remarks suggest certain facts not in evidence, disregard those remarks. However, you are to consider carefully the closing arguments of the attorneys. Ultimately you must draw your own conclusions and decide your verdict according to the evidence, under the instructions given to you by the court.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_8",
+      "content": "CREDIBILITY OF WITNESSES: It is the duty of the jury to scrutinize and weigh the testimony of witnesses and to determine the effect of the evidence as a whole. You are the sole judges of the credibility, that is, the believability, of the witnesses and of the weight to be given to their testimony. In determining the credibility of each witness and the weight to give the testimony of each witness, consider these factors: A.whether the witness has an interest or lack of interest in the result of this trial; B.the witness\u2019s conduct, appearance, and demeanor on the witness stand; C.the clearness or lack of clearness of the witness\u2019s recollections; D. the opportunity the witness had for observing and for knowing the matters the witness testified about; E.the reasonableness of the witness\u2019s testimony; F.the apparent intelligence of the witness; G.bias or prejudice, if any has been shown; H.possible motives for falsifying testimony; and I.all other facts and circumstances during the trial which tend either to support or to discredit the testimony. Then give to the testimony of each witness the weight you believe it should receive. There is no predetermined way for you to evaluate the testimony; instead, you should use your common sense and experience. Revised 01/05/26 4",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_9",
+      "content": "EVIDENCE; INTERPRETING EVIDENCE: When making your decision, you may rely on both direct and circumstantial evidence. Direct evidence is testimony by a witness about what that witness personally did, saw, or heard. Circumstantial evidence is indirect evidence from which the fact finder may infer that another fact is true. Neither type of evidence should be given categorically more weight than the other. The State\u2019s burden of proving its case beyond a reasonable doubt applies to each and every element of the criminal offense charged. This burden, however, does not operate on the many subordinate, evidentiary, or incidental facts as distinguished from proof of the elements of the crime or of an ultimate fact. Where, however, the State relies in whole or in part on circumstantial evidence to prove an element of a crime, although each link in the chain of evidence need not be proven beyond a reasonable doubt, the cumulative impact of that evidence must, in order to support that inference, convince the finder of fact beyond a reasonable doubt that the element has been proven.",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "instruction_10",
+      "content": "UNANIMOUS VERDICT: The verdict of the jury must be unanimous as to whether the defendant is guilty or not guilty. Once you reach a verdict, the verdict form must be signed by each of you, and then you will notify my bailiff that a verdict has been reached. DATE: ___________________ _______________________ JUDGE Revised 01/05/26 1 DISTRICT COURT, CRIMINAL DIVISION CHARLOTTE COUNTY, MIDLANDS STATE OF MIDLANDS, * CASE NO.: CR25 -04-1009 Plaintiff, * * v. * * CHARLIE MARTIN, * Defendant. * * VERDICT _________ We, the jury, find Charlie Martin guilty of Murder, as charged in the indictment. _________ We, the jury, find Charlie Martin guilty of Negligent Homicide, a lesser-included offense. _________ We, the jury, find Charlie Martin not guilty. _________________ _________________ _________________ Juror #1 Juror #2 Juror #3 _________________ _________________ _________________ Juror #4 Juror #5 Juror #6 _________________ _________________ _________________ Juror #7 Juror #8 Juror #9 _________________ _________________ _________________ Juror #10 Juror #11 Juror #12",
+      "source": "Jury Instructions"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_101_culpability_defined",
+      "content": "Midlands Penal Code \u00a718-101 Culpability Defined: (A) A person is not guilty of an offense unless that person acted purposefully, knowingly, recklessly, or negligently, as the law may require, with respect to each material element of the offense.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_102_purposefully_defined",
+      "content": "Midlands Penal Code \u00a718-102 Purposefully Defined: (A) A person acts purposefully with respect to a material element of an offense when: (i) if the element involves the nature of that person\u2019s conduct or a result thereof, it is that person\u2019s conscious objective to engage in conduct of that nature or to cause such a result; and (ii) if the element involves the attendant circums tances, that person is aware of the existence of such circumstances or that person believes or hopes they exist.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_103_knowingly_defined",
+      "content": "Midlands Penal Code \u00a718-103 Knowingly Defined: (A) A person acts knowingly with respect to a material element of an offense when: (i) if the element involves the nature of that person\u2019s conduct or the attendant circumstances, the person is aware that their conduct is of that nature or that such circumstanc es exist; and (ii) if the element involves a result of that person\u2019s conduct, the person is aware that it is practically certain that his conduct will cause such a result.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_104_recklessly_defined",
+      "content": "Midlands Penal Code \u00a718-104 Recklessly Defined: (A) A person acts recklessly with respect to a material element of an offense when that person consciously disregards a substantial and unjustifiable risk that the material element exists or will result from that person\u2019s conduct. The risk must be of such a na ture and degree that, considering the nature and purpose of the actor\u2019s conduct and the known circumstances, its disregard involves a gross deviation from the standard of conduct that a law-abiding person would observe in the actor\u2019s situation.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_105_negligently_defined",
+      "content": "Midlands Penal Code \u00a718-105 Negligently Defined: (A) A person acts negligently with respect to a material element of an offense when that person should be aware of a substantial and unjustifiable risk that the material element exists or will result from that person\u2019s conduct. The risk must be of such a nature and degree that the actor\u2019s failure to perceive it, considering the nature and purpose of the actor\u2019s conduct and the known circumstances, involves a gross deviation from the standard of care that a reasonable person would observe in the actor\u2019s situatio n. |",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_201_causation",
+      "content": "Midlands Penal Code \u00a718-201 Causation: (A) A defendant\u2019s conduct is the legal cause of the result when: (a) the result would not have occurred but for the defendant\u2019s conduct; and (b) the risk of that result was the natural and foreseeable result of the defendant\u2019s conduct. Revised 01/05/26 2",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_301_criminal_homicide_defi",
+      "content": "Midlands Penal Code \u00a718-301 Criminal Homicide Defined: (A) A person is guilty of criminal homicide if that person purposefully, knowingly, recklessly, or negligently causes the death of another human being. (B) Criminal homicide is murder, manslaughter, or negligent homicide.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_303_murder",
+      "content": "Midlands Penal Code \u00a718-303 Murder: (A) Criminal homicide constitutes murder when: 1. it is committed purposefully or knowingly; or 2. it is committed recklessly under circumstances manifesting extreme indifference to the value of human life. (B) Murder is a felony of the first degree.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_304_manslaughter",
+      "content": "Midlands Penal Code \u00a718-304 Manslaughter: (A) Criminal homicide constitutes manslaughter when it is committed recklessly. (B) Manslaughter is a felony of the second degree",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_306_negligent_homicide",
+      "content": "Midlands Penal Code \u00a718-306 Negligent Homicide: (A) Criminal homicide constitutes negligent homicide when it is committed negligently. (B) Negligent homicide is a felony of the third degree.",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "statute_midlands_penal_code__18_401_insanity_defense",
+      "content": "Midlands Penal Code \u00a718-401 Insanity Defense: (A) A person is not responsible for criminal conduct if at the time of such conduct, as a result of mental disease or defect, that person lacks substantial capacity either to appreciate the criminality (wrongfulness) of their conduct or to conform their conduc t to the requirements of law. (B) As used in this Section, the terms \u201cmental disease or defect\u201d do not include an abnormality manifested only by repeated criminal or otherwise anti -social conduct, including, but not limited to, recidivists, psychopaths, and sociopaths. Revised 01/05/26 1",
+      "source": "Midlands Penal Code"
+    },
+    {
+      "id": "case_state_v__marquez__1975",
+      "content": "State v. Marquez (1975): Defendant charged with offense requiring a mental state of \u201cknowingly\u201d argued that the evidence was insufficient because there was no indication she desired or hoped for a particular result. Held: Conviction affirmed. Although a defendant who acted purpose fully or who intended a particular result certainly acted knowingly, MPC \u00a7 18-103 makes clear there is no such requirement.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__butler__1978",
+      "content": "State v. Butler (1978): A trial court may not prevent a case of murder from going to the jury under an \u201cextreme reckless murder\u201d theory if the evidence, viewed as a whole, could be reasonably interpreted as showing the type of heightened recklessness that equates to purposeful or knowing homicide.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__dawson__2012",
+      "content": "State v. Dawson (2012): Defendant\u2019s conviction for reckless murder in a vehicular -homicide case was affirmed because \u201cthe facts show[ed] a marked deviation in degree away from the established standards of regard for life and the safety of others that is typically seen in the negl igent acts that cause most vehicular homicides.\u201d",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__barrow__2018",
+      "content": "State v. Barrow (2018): Defendant appeals his conviction for murder based on a violation of MPC \u00a718-303(A)(2). Defendant argues there was insufficient evidence of \u201cextreme recklessness\u201d to convict him of murder. MPC \u00a718-303(A)(2) prohibits the reckless killing of another person under circumstances manifesting extreme indifference to the value of human life. The legal concept behind this version of murder has been described as \u201cdeath by a thousand cuts.\u201d While the Court declines to adopt that phrase as a valid legal doctrine, the c oncept presented therein is apt. When a defendant commits a series of actions that may not, in and of themselves, evince a specific intent to kill the victim, that defendant can still be found guilty of murder if the cumulative harm of their actions shows an extreme indifference to the value of human life. For example, if a defendant purposefully or knowingly put poison in someone\u2019s food, that defendant would be guilty of murder. But if, instead, that defendant mistakenly gave someone peanuts when the defen dant knew that person had a peanut allergy, that defendant would be guilty of at least negligent homicide and perhaps manslaughter. However, if the defendant gave someone nonfatal doses of a toxic substance every day for an extended period of time and even tually the cumulative toxicity killed the person, the defendant would be guilty of murder under MPC \u00a718 -303(A)(2). Clearly, the repeated harmful actions by the defendant show greater culpability than accidental or unintentional poisoning. Because the actio ns of this defendant were a marked deviation from the standards of a law-abiding person, his actions were reckless, and the repeated injurious acts prove that the defendant manifested an extreme indifference to the value of human life. Revised 01/05/26 2",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__durden__1996",
+      "content": "State v. Durden (1996): Defendant appeals his conviction for mayhem and domestic terrorism on the grounds that he was found to be \u201ctemporarily insane\u201d at the time of the offenses. Midlands does not recognize \u201ctemporary insanity\u201d as a valid legal defense. However, a defendant shal l be permitted to present evidence of his mens rea at the time of the offense, subject to the MRE. The trial court erred to the prejudice of the defendant when it ruled that the defendant could not present any evidence about his state of \u201ctemporary insanity\u201d during trial. While a defendant shall not argue that he should be acquitted by reason of insanity based on a \u201ctemporary insanity\u201d defense, he may present evidence that calls into question his ability to form the requisite mens rea for the charged offense(s), subject to the MRE. Held: \u201cTemporary insanity\u201d is relevant evidence for the jury to consider even if it isn\u2019t a legal defense; case remanded for retrial.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__arbuckle__2016",
+      "content": "State v. Arbuckle (2016): Defendant appealed his conviction for murder pursuant to MPC 18 -303(A)(2). State argued that Defendant was guilty of murder because Defendant acted recklessly under circumstances that manifested an extreme indifference to human life, or what was known at c ommon law as depraved heart murder. Here, Defendant argues that the State failed to show this heightened mens rea and instead only established recklessness, which is the mens rea for manslaughter. We agree. Proving only that a defendant acted in a way that ignored an unjustifiable risk of harm, including loss of life of another, is insufficient evidence of depraved heart murder. That is recklessness. Depraved heart murder requires evidence that (1) the defendant acted reckless and (2) did so in a way that shows the defendant had an extreme indifference towards the value of human life. The most common way in which the State can prove a Defendant violated MPC 18 - 303(A)(2) is by proving the Defendant committed multiple reckless actions that had a high probability of causing severe bodily harm to another. Here, there was only one act of recklessness, and it was not sufficient proof, in itself, of an extreme indifference to life. Though nothing about this decision precludes one reckless act\u2014if otherwise sufficient proof of an extreme indifference to life\u2014from constituting depraved heart murder. Conviction overturned.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__bernardi__2018",
+      "content": "State v. Bernardi (2018): Defendant appealed her conviction for murder of an employee. Defendant was a high -level manager for a home construction contractor business. To say that safety of its employees was not a concern for the business is an understatement. Defendant now argues t hat she cannot be convicted for depraved heart murder because the CEO of the business told her to deny OSHA - required safety equipment and other PPE to employees. While that evidence may be used as mitigation evidence during sentencing, it is not dispositiv e on culpability. The Defendant\u2019s own acts and omissions are still relevant to establish her extreme indifference to human life under MPC 18-303(A)(2). Just because another may have acted with an extreme indifference to human life does not acquit the Defendant of her own bad acts. Criminal law does not acknowledge a comparative fault or contributory negligence defense. While an accused may offer evidence to rebut causation in a homicide cause, an accused is prohibited from arguing another person is more at fault for the victim\u2019s death (i.e. comparative fault or contributory negligence). Revised 01/05/26 3",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__teglia__2025",
+      "content": "State v. Teglia (2025): Defendant appeals her conviction for depraved heart murder. Defendant was a famous movie actor and director who worked for Pohlmann & Smith Production Studios. During the filming of a bank robbery scene in a movie that Defendant was directing, a prop gun was used. Unfortunately, the firearm was loaded with live ammunition and one of the cast members died from a gunshot wound. The production studio was found liable for wrongful death; however, the trial court prohibited the Defendant from presenting evidence of negligence or recklessness of cast members and production managers during Defendant\u2019s murder trial. Evidence of recklessness or negligence of others may be relevant to whether the Defendant knew or should have known that her actions or omissions had a high probability of causing severe bodily harm to another person. However, the actions of others are not dispositive on whether the Defendant manifested an extreme indifference to human life when evaluating the Defendant\u2019s actions independent of the additional negligent or reckless actions of a third party.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__shepard__2025",
+      "content": "State v. Shepard (2025): Defendant comes to the court for relief from judgment following a conviction for murder following a motor vehicle accident that caused the death of three individuals. Defendant was charged with murder after the prosecution put forth evidence that Defendan t had a B.A.C. of .23, was speeding in excess of 20 mph over the speed limit and texting while driving. Defendant is asking this Court to overturn his conviction and remand for a new trial because Defendant believes the trial court improperly excluded evi dence offered by the Defense regarding the Defendant\u2019s claim that the victims would not have died but for the subsequent negligent actions of the hospital emergency room staff. Specifically, the Defendant sought to include evidence that the emergency room physicians failed to properly diagnose head traumas and did not order a CT scan. As a result, two of the three patients died as a result of a brain bleed. The trial court found that the actions of the emergency room department after the accident occurred were not relevant to assess the material fact of whether Defendant\u2019s actions constituted an extreme indifference to the value of human life. Specifically, the trial court excluded the evidence because defendants \u201ctake their victims as they find them. \u201d We agree. While there may be some cases in which the subsequent intervening actions of a third party may impact whether the Defendant knew or should have known that their own actions could result in death, in this case it is well established common sense that driving dangerously could result in danger to other drivers or, as is the case here, pedestrians.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__bunker__2025",
+      "content": "State v. Bunker (2025): Defendant appeals his conviction for premeditated murder. Defendant entered a written plea of not guilty by reason of insanity; however, he was found to be legally sane at the time of the crime by a forensic psychologist. While temporary insanity is not a viable defense in the State of Midlands, a Defendant is always permitted to present, otherwise admissible, evidence of his inability to form the requisite mens rea. Such \u201cmental impairments\u201d are always relevant because such evidence helps the jury determin e whether the Defendant had the alleged mens rea to commit the charged offense. Revised 01/05/26 4 Burden of Proof & Presumption of Innocence",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__rich__1904",
+      "content": "State v. Rich (1904): In a criminal case, the burden is proof beyond a reasonable doubt with respect to each and every element of the charged offense(s). The burden is on the State and never shifts to the defendant.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__smith__1981",
+      "content": "State v. Smith (1981): The State\u2019s burden of proof applies to elements, not discrete facts. The question in every case is whether cumulative impact of the otherwise-admissible evidence is sufficient to convince the fact finder beyond a reasonable doubt that the element has been proven.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__tamoe__2015",
+      "content": "State v. Tamoe (2015): A criminal defendant is never required to present evidence or offer an alternative theory of the crime. If a defendant does so, however, a prosecutor may note the defense\u2019s failure to offer evidence in support of its theory of the case. Such comments do no t imply that the burden of proof has shifted to the defense, nor do they necessarily constitute an infringement on a defendant's exercise of the right to remain silent.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__lazares__2016",
+      "content": "State v. Lazares (2016): Criminal defendants have a constitutionally protected right to refuse to speak with police officers and to decline to testify in their own defense. No prosecutor or witness may comment (expressly or implicitly) on a defendant\u2019s exercise of either right or suggest that refusal to testify or termination of a police interrogation demonstrates consciousness of guilt.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__chatterjee__2017",
+      "content": "State v. Chatterjee (2017): If a criminal defendant chooses to testify, the defendant\u2019s credibility may be challenged just like that of any other witness. For that reason, it is not \u201cburden -shifting\u201d for a prosecutor to point out during cross-examination or summation that the defense has not produced documents or other evidence to support a theory or argument that has been advanced by the defense. The State may not, however, suggest that a defendant had an affirmative duty to produce any documents in order to be found not guilty. Trial Procedures",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__haughey__2007",
+      "content": "State v. Haughey (2007): In Midlands, all criminal trials are bifurcated with a guilt phase followed by a penalty phase.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__deters__2009",
+      "content": "State v. Deters (2009): During the guilt phase, evidence is not relevant if it is directed solely to the penalty to be given to the defendant if found guilty. It also is improper for an attorney to comment on sentencing or discuss potential penalties during the guilt phase of the trial. Such conduct is grounds for a mistrial and may constitute conduct for which sanctions are appropriate. Revised 01/05/26 5",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__niehaus__2002",
+      "content": "State v. Niehaus (2002): Under Midlands practice, both sides may always present evidence to prove or rebut any element of a charged offense. Neither side may object to such evidence on the ground that the objecting party is no longer pursuing (or challenging) the pertinent issue.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__rittgers__1945",
+      "content": "State v. Rittgers (1945): Unlike some jurisdictions, MRE 615 allows for the sequestration of the lead investigating officer in a criminal case if that law enforcement officer is not elected to be the government\u2019s representative during pretrial matters.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__singh__2019",
+      "content": "State v. Singh (2019): Venue and identification of the defendant are necessary elements of every criminal prosecution. Because Midlands does not permit motions for acquittal, the defense closing argument is the proper place to bring it to the court\u2019s attention that the prosecuto r has failed to prove these necessary elements of the charged offense. Ahmed v. O\u2019Keeffe (2014) Civil case arising from alleged assault. The plaintiff was called as a witness and testified fully on direct examination. On cross examination, however, the plaintiff failed to respond to some questions, purportedly because of a condition arising from the assault. Held: The judgment for the plaintiff must be reversed. The reason why the witness failed to respond to questions on cross examination is immaterial. If a witness becomes unable or unwilling to respond to otherwise proper questions on cross examination, the trial court must strike the witness\u2019s testimony in its entirety. Character Evidence",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__nakajima__1986",
+      "content": "State v. Nakajima (1986): Under MRE Rule 404, general evidence of a defendant\u2019s good character or law -abiding nature is not admissible. However, under Rule 404(a)(1), a criminal defendant may offer certain evidence of a \u201cpertinent\u201d character trait. The requirement that evidence be \u201cpertinent\u201d significantly exceeds the comparably low bar of relevancy. \u201cPertinence\u201d is a more exacting standard by which the trait itself must directly relate to a particular element or facet of the crime charged. Estate of Hamilton v. Walton (2009) Testimony about a psychological condition does not constitute \u201c[e]vidence of a person\u2019s character or character trait,\u201d the only evidence excluded by MRE 404(a)(1). The fact that a person suffers from a medically recognized psychological disorder is not cha racter evidence any more than the fact that a person has a physical condition that would make it easier or harder for them to perform a given act. Revised 01/05/26 6",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_ellis_v__norton__1999",
+      "content": "Ellis v. Norton (1999): Testimony about an individual\u2019s willingness to strain or \u201cpush\u201d themselves mentally, physically, or both to finish a task does not constitute \u201c[e]vidence of a person\u2019s character or character trait,\u201d the only evidence excluded by MRE 404(a)(1). General discussions of a person\u2019s resolve or pluckiness does not constitute improper character evidence. Grounds & Basis for Evidentiary Rulings",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__wiseman__1975",
+      "content": "State v. Wiseman (1975): The beyond-a-reasonable-doubt burden does not apply to threshold matters involving the admissibility of evidence. In Midlands, the proponent of evidence need only prove these evidentiary matters by a preponderance of the evidence (i.e., it must establish t hat all elements are more likely than not true).",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_zomerfeld_v__noto__2012",
+      "content": "Zomerfeld v. Noto (2012): Under MRE 104(a), when evaluating the admissibility of evidence, a trial court is permitted to rely on both admissible and inadmissible evidence. The use of underlying inadmissible evidence does not make that inadmissible evidence admissible. Instead, the court is permitted to consider the underlying inadmissible evidence to assess the admissibility of the offered evidence. In a jury trial, the jury may not always be privy to the underlying facts used to determine what evidence is admissible, but the Court may hear it. Previously upheld examples include using character evidence to make a ruling on hearsay exceptions, using hearsay to make a ruling on character evidence, and using hearsay to decide whether an expert has adequate foundation to testify.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__watt__1983",
+      "content": "State v. Watt (1983): Under MRE 104(a), courts may consider custodial documents, such as clerks\u2019 certifications or affidavits of records keepers, when determining the admissibility of other evidence without regard for the admissibility of the custodial document itself. The cust odial document typically only addresses preliminary matters of admissibility and is not entered into evidence. Authentication Kennedy v. Kennedy-Jones (2005) As long as the proponent of the statement produces evidence that would permit a reasonable jury to find, by a preponderance of the evidence, that a given person made a particular statement, a court assessing admissibility must assume that the statement was made by that person.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_ginger_v__heisman__2015",
+      "content": "Ginger v. Heisman (2015): Absent particularized reason to believe that the communication may have been sent by someone else, the fact that an electronic communication (an email, text, or social media post) is listed as coming from a number or account that is either known or purport s to belong to a particular person is sufficient foundation that the communication was sent by the person. Revised 01/05/26 7 Experts",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_davis_v__adams__1993",
+      "content": "Davis v. Adams (1993): Trial judges must ensure that any scientific testimony or evidence admitted is not only relevant but reliable. In determining reliability, judges should consider only the methods employed and the data relied upon, not the conclusions themselves. The proponent of the evidence has the burden of proving each section of Rule 702 by a preponderance of the evid ence. Tarot Readers Association of Midlands v. Merrell Dow (1994) In assessing reliability under Rule 702(C), judges should consider whether the theory or technique has been or can be tested, whether it has been subjected to peer review and publication, whether it has a known error rate, and whether it has gained widespr ead acceptance within the field. These factors, while relevant, are not necessarily dispositive. For example, lack of publication does not automatically foreclose admission; sometimes well -grounded but innovative theories will not have been published. Ther e is no definitive checklist. Judges must make such assessments based on the totality of the circumstances.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_richards_v__mississippi_bbq__1997",
+      "content": "Richards v. Mississippi BBQ (1997): Midlands Rule of Evidence 703 does not permit experts to testify or to present a chart in a manner that simply summarizes inadmissible hearsay without first relating that hearsay to some specialized knowledge on the expert\u2019s part. The court must distinguis h experts relying on otherwise inadmissible hearsay to form scientific conclusions from conduits who merely repeat what they are told. The testimony of the former is admissible; that of the latter is not. Of course, statements that would otherwise be admis sible are not inadmissible simply because they are offered by or through an expert witness.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__richardson__2017",
+      "content": "State v. Richardson (2017): It was not an abuse of discretion for the trial court to allow the forensic pathologist to testify to the cause and manner of death even though the pathologist was not tendered as an expert prior to providing her testimony. Unlike other jurisdictions, Midlands does not require a party to \u201ctender an expert\u201d before eliciting an expert opinion. Whether MRE 702 foundational requirements have been satisfied is an evidentiary determination that rests within the sound discretion of the trial court. Kane Software Co. v. Mars Investigations (1998) Midlands does not permit parties to use their experts as weapons in a trial by ambush or unfair surprise. Expert reports that are exchanged prior to trial must contain a complete statement of all opinions the expert will testify to and the basis and reason s for them, the facts or data considered by the expert in forming their opinions, and the expert\u2019s qualifications. Experts are strictly prohibited from testifying on direct and redirect examination about any opinions or conclusions not stated in their report, and such testimony must be excluded upon a timely objection from opposing counsel. For example, an expert may not testify on direct or redirect examination that they formed a conclusion based on evidence that came out during trial that the expert did n ot previously review. However, if an expert is asked during cross examination about matters not contained in their report, the expert may freely answer the question as long as the answer is responsive. When an objection is made under Kane Software, the tri al court should ask the Revised 01/05/26 8 proponent of the testimony to refer the trial court to where the proposed testimony is contained or otherwise referenced in the expert\u2019s disclosure to ensure that the record is clear. Yu-Oh Industries v. Beckstein Alekri Inc. (2000) Appellants argue that the trial court improperly excluded testimony from the defense expert on the basis that certain testimony amounted to \u201ctrial by ambush\u201d under the precedent set by Kane Software Co. v. Mars Investigations (1998). Appellants admit that the defense expert was attempting to testify to certain underlying facts that were not expressly disclosed in the expert report and that such facts contributed to the expert\u2019s conclusions, but they argue that the conclusion itself was disclosed and thus it was unnecessary for every underlying detail to be disclosed. We hold that the Appellants\u2019 argument has merit. Experts should not be expected to include in their reports every basic scientific fact known to lay people and known realities of their expertise that support their conclusion. Similarly, experts should not be expected to include in their reports every underlying fact from a specific document so long as the experts explicitly disclosed that they relied upon that document in forming their opinions a nd that document was made available to the other party through discovery. Such requirements would lead to expert reports that are hundreds, if not thousands, of pages long. For example, an accident reconstructionist need not explain Newton\u2019s laws of motion in their report. However, if an expert wishes to testify that they believe the indentations on a vehicle\u2019s door means that the vehicle collided with a streetlamp at 45 MPH, then measurements, equations, and other relevant facts that form the basis for that specific conclusion must be disclosed in the expert\u2019s report.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_jeffries_v__polk_county_police_department__2007",
+      "content": "Jeffries v. Polk County Police Department (2007): Generally, law enforcement officers are not \u201cexperts\u201d subject to MRE 702 or this Court\u2019s holding in Tarot Readers Association of Midlands v. Merrell Dow (1994) and its progeny. However, law enforcement officers may have specialized training, skills, and ex perience beyond the average citizen as contemplated in MRE 701 and may testify based on such specialized knowledge. Insofar as a law enforcement officer is asked to provide an opinion based on that officer\u2019s general training, skills, and experience as a la w enforcement officer (e.g., whether the officer followed standard protocol in collecting evidence), the admissibility thresholds of MRE 702 and Tarot Readers do not apply. Rather, the admissibility of a law enforcement officer\u2019s non-expert opinion is subject to the standards of MRE 701 and any other applicable rule of evidence. Omnidirectional Solutions v. Little Bird Word LLC (2023) It was never the intention of this Court for its holding in Tarot Readers Association of Midlands v. Merrell Dow (1994) and its progeny to create a rigid and unyielding standard for expert opinions. So long as the expert can sufficiently explain their expertise, training, and method for review, Tarot Readers Assoc. shall not be used by trial courts to prohibit otherw ise credible and admissible opinions simply because there is not a known error rate or prior peer review of the expert\u2019s analysis. Such questions and potential challenges of credibility are better left to cross examination. Revised 01/05/26 9 Hearsay America\u2019s Best Cookie v. International House of Waffles (2009) The Court recognizes that practices differ in other jurisdictions. But, in Midlands, the definition of \u201chearsay\u201d includes out-of-court statements by a witness who is on the stand or by another person who has or will be testifying in a particular trial.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__tate__1987",
+      "content": "State v. Tate (1987): Midlands Rule of Evidence 801(d)(2) may be invoked in only one direction in a criminal case. Specifically, Rule 801(d)(2) permits the State to offer statements by a criminal defendant. Subject to MRE 106, Rule 801(d)(2) does not permit the defense to offer the defendant\u2019s own statements, even if the State has already elicited other out -of-court statements by a defendant during a preceding examination.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_homel_v__arnzen__2015",
+      "content": "Homel v. Arnzen (2015): For purposes of MRE 801(d)(2), police officers, prosecutors, informants, and others working with law enforcement officials are not an \u201copposing party\u201d of a criminal defendant.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__hilton__1985",
+      "content": "State v. Hilton (1985): MRE 801(d)(2) governs statements \u201coffered against an opposing party.\u201d This rule does not require the proponent of the evidence to offer the statement \u201cagainst the party\u2019s interests\u201d in order to qualify as an exemption to hearsay under MRE 801(d)(2) \u2013 that language is notably only found in MRE 804(b)(3). If the drafters of the MRE had wanted 801(d)(2) to only apply if the statement was \u201cagainst the party\u2019s interest,\u201d it would have drafted the rule as such.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__smarda__2005",
+      "content": "State v. Smarda (2005): A witness testifying to their own recollection of what they saw occur on a video recording cannot be hearsay. Here, the defendant\u2019s description of what she viewed happening (e.g. people\u2019s movements and interactions) during a movie \u201couttake\u201d video is not he arsay. However, it may be a violation of MRE 802 if a witness testifies to statements they heard or saw on the video depending on whether the statements met the definition of hearsay or if an exception to the hearsay rule applied.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__bowling__2004",
+      "content": "State v. Bowling (2004): For statements offered pursuant to MRE 801(d)(2)(E), the proof of the conspiracy need only be shown by a preponderance standard. Given that the Midlands Rules of Criminal procedure do not permit recalling witnesses, the proponent of the evidence may reques t that a statement be admitted conditionally so that further foundation of the conspiracy can be developed through other witnesses. Whether the evidence will be admitted conditionally is within the sound discretion of the trial court. Chambers v. By the Book Publishing, Ltd. (2015) The hearsay rule is only implicated where an out -of-court statement is being used for the truth of the matter asserted. If it only matters whether the out -of-court statement was made (not whether it was true), then the hearsay rule is not implicated. Revised 01/05/26 10 State v. B.F. De la Porta (2024) Defendant offered statements of the investigating agent (\u201cI know that you did this. You\u2019re a mastermind and this is exactly the type of job that you would pull . . . and now you\u2019re gonna be mine\u201d) to show bias in the investigation. The State objected to he arsay, arguing the \u201ctruth value\u201d\u2014 that which the Defense wished the jury to infer from the statement \u2014was that the Agent was out to get the Defendant and that was the purpose for which the Defense was entering it. Held : To be inadmissible as hearsay, an out-of-court statement must be (a) an assertion of fact (b) offered to establish the truth of that asserted fact. No part of the rule against hearsay concerns itself with the \u201ctruth value\u201d of an out-of-court statement beyond the fact asserted in the statement. The statement here contains several assertions of fact \u2014that the investigating agent knew the Defendant was involved; that the Defendant was a mastermind and that the heist was of the sort the Defendant would commit; and that the Defendant would be his. Because the Defense disputed these assertions, it cannot be reasonably argued that any part of the Agent\u2019s statement was offered to prove the truth of the matter(s) asserted. As such, the statement is definitionally not hearsay. Causation",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__desiato__2020",
+      "content": "State v. Desiato (2020): Under traditional common law, a defendant could be found liable for the death of a victim if that victim died within a year and a day from the injury suffered at the hands of the defendant. The idea being that the victim\u2019s cause of death was still directly and proximately caused by the defendant within that timeframe. We see no reason to divert from the common law \u201cyear plus one day\u201d framework. Held: In a criminal homicide case, the prosecutor must prove, beyond a reasonable doubt, that the defendant\u2019s volitional act was the direct and foreseeable cause of the victim\u2019s death.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__rodgers__2014",
+      "content": "State v. Rodgers (2014): Defendant argues that the trial court should not have instructed the jury that he conceded causation when he conceded negligence. The trial court\u2019s instruction was proper. It is axiomatic that causation is an element of negligence. Conviction affirmed.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_spear_v__vietnam_travel_agency__2016",
+      "content": "Spear v. Vietnam Travel Agency (2016): Plaintiff appeals the trial court's granting of summary judgment in favor of Defendant. Plaintiff argues that he had no duty to protect himself from harm. While Midlands law does not impose an affirmative duty to save others, Midlands law does require someone to protect themselves from obvious harm. Appeal denied.",
+      "source": "Case Law"
+    },
+    {
+      "id": "case_state_v__narsipur__2025",
+      "content": "State v. Narsipur (2025): Defendant appeals his conviction for manslaughter on the grounds that the judge improperly instructed the jury that causation is an objective standard. Defendant\u2019s argument is not well taken. Courts do not adjust foreseeability downward because a defendan t was distracted, anxious, carless, or ignorant. Causation is an objective not subjective standard. While a whether a defendant was anxious, distracted, or ignorant of certain facts are pertinent considerations when arguing the defendant\u2019s mental state, bu t not when addressing causation. Conviction affirmed.",
+      "source": "Case Law"
+    }
+  ],
+  "facts": [
+    {
+      "id": "fact_synopsis",
+      "fact_type": "background",
+      "content": "Charlie Martin was indicted for criminal homicide for causing the death of fellow contestant Rob \nArmstrong during the filming of reality TV show The Saboteurs . Charlie Martin has entered a plea of \n\u201cnot guilty\u201d and the matter is scheduled for a jury trial in the Charlotte County District Court.",
+      "source": "Synopsis"
+    },
+    {
+      "id": "fact_indictment",
+      "fact_type": "legal_standard",
+      "content": "Charge: MURDER. On or about April 6, 2025, in Charlotte County, Midlands, Charlie Martin caused the death of Rob Armstrong purposefully, knowingly, or recklessly under circumstances which manifested an extreme indifference to the value of human life, which constitutes the offense of MURDER, a Felony of the First Degree, in violation of Midlands Penal Code 18-303, and against the peace and dignity of the State of Midlands. R. Pickell R. Pickell (00341050) ASST. PROSECUTING ATTORNEYCHARLOTTE COUNTY",
+      "source": "Indictment"
+    },
+    {
+      "id": "stip_1",
+      "fact_type": "stipulation",
+      "content": "Other than issues related to MRE 404, 405, 608, and 609, any and all notice requirements and/or other discovery obligations pursuant to the MRE and Midlands Rules of Criminal Procedure have been satisfied by all parties.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_2",
+      "fact_type": "stipulation",
+      "content": "For the convenience of the parties, witnesses, court, and jury, all exhibits have been pre-labeled and pre-numbered. Those numbers will be used for all purposes at trial regardless of which party first offers the exhibit or the order in which the exhibits are offered.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_3",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that Rob Armstrong, a 34-year -old male, died on April 6,",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_4",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that no evidence exists that either Rob Armstrong or Charlie Martin were the victims of sexual assault or domestic violence, including dating violence.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_5",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that Hotel Lux is located in Charlotte County, Midlands.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_6",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that the affirmative defense of duress is not a valid legal defense in response to a murder charge.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_7",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that all statements recorded via transcripts in this case were said by the person listed as the speaker of that statement. The transcripts are accurate reflections of the recorded conversations.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_8",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that as part of the Episode 9 challenge, each contestant had an assigned color, and Rob Armstrong\u2019s assigned color was blue.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_9",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that all of the information contained within Exhibit 5 is truthful and accurate.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_10",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that they waive all objections to the admissibility of Exhibits 9, 10, 11, 12, 13,",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_11",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that Exhibits 1, 8, 17, 22, are preadmitted as evidence without objections and may be referenced at any time during the trial starting with opening statements. Revised 01/05/26 2",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_12",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that Exhibit 2 (Episode Guide), Exhibit 15 (Casting List, Season 10), and Exhibit 16 (Past Season Winners) truthfully and accurately describe the information contained therein.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_13",
+      "fact_type": "stipulation",
+      "content": "The Parties and witnesses waive all objections arising under the U.S. Constitution.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_14",
+      "fact_type": "stipulation",
+      "content": "Chain of custody was properly documented for all exhibits, and all exhibits have been properly preserved prior to trial. All notice requirements of MRE 902(11) and 902(12) have been satisfied for all exhibits.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_15",
+      "fact_type": "stipulation",
+      "content": "Exhibit 14 is a Material Safety Data Sheet (MSDS) for Oxalic Acid from the Midlands Product Safety Commission. A PDF version of this document was lawfully recovered from Charlie Martin\u2019s personal cell phone. An analysis of the document\u2019s metadata by digital forensic technicians determined that the PDF document was downloaded and saved on Martin\u2019s personal cell phone on January 8, 2025 at 9:46 am.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_16",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that Charlie Martin\u2019s personal cell phone was not used at any point between February 1 and April",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_18",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that prior to this case, the estate of Rob Armstrong filed a wrongful death claim against Selcov Studios. The parties settled prior to trial. While the terms of the settlement shall not be disclosed due to a non-disclosure agreement, that non-disclosure agreement does not limit any witness testimony in this case.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_19",
+      "fact_type": "stipulation",
+      "content": "The Parties agree that if Dr. Atlas Hartley is not called to testify as a witness, then Exhibits 3 and 4 are pre-admitted and may be referenced at any time during the trial starting with opening statements.",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_20",
+      "fact_type": "stipulation",
+      "content": "All parties agree that Exhibit 31 (\u201cOxalic Acid Sample\u201d) is 2 grams of the same oxalic acid that was present in the storage room at the Hotel Lux from January through April of 202 5 during the filming of \u201cThe Saboteurs.\u201d",
+      "source": "Stipulations"
+    },
+    {
+      "id": "stip_21",
+      "fact_type": "stipulation",
+      "content": "All parties agree that Exhibit 32 (the scoop recovered by police during the search of Charlie Martin\u2019s home) tested positive for trace amounts of oxalic acid when it was found.",
+      "source": "Stipulations"
+    }
+  ],
+  "section_pages": {
+    "synopsis": {
+      "start": 2,
+      "end": 2
+    },
+    "special_instructions": {
+      "start": 5,
+      "end": 7
+    },
+    "available_documents": {
+      "start": 8,
+      "end": 8
+    },
+    "captains_meeting": {
+      "start": 9,
+      "end": 11
+    },
+    "indictment": {
+      "start": 12,
+      "end": 12
+    },
+    "jury_instructions": {
+      "start": 13,
+      "end": 17
+    },
+    "stipulations": {
+      "start": 18,
+      "end": 19
+    },
+    "motions_in_limine": {
+      "start": 20,
+      "end": 25
+    },
+    "relevant_law": {
+      "start": 26,
+      "end": 37
+    },
+    "exhibits": {
+      "start": 38,
+      "end": 133
+    },
+    "witnesses": {
+      "start": 134,
+      "end": 251
+    }
+  },
+  "total_pages": 251,
+  "witness_count": 10,
+  "exhibit_count": 31
+}

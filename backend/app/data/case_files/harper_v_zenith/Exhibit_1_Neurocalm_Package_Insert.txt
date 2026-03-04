@@ -1,0 +1,47 @@
+NEUROCALM (zenithprozine) TABLETS
+PACKAGE INSERT
+
+HIGHLIGHTS OF PRESCRIBING INFORMATION
+
+INDICATIONS AND USAGE
+Neurocalm is indicated for the treatment of generalized anxiety disorder (GAD) 
+in adults.
+
+DOSAGE AND ADMINISTRATION
+- Recommended starting dose: 25 mg once daily
+- May increase to 50 mg once daily after 2 weeks
+- Maximum recommended dose: 75 mg once daily
+
+WARNINGS AND PRECAUTIONS
+- Suicidal thoughts and behaviors in adolescents and young adults
+- Serotonin syndrome when used with other serotonergic drugs
+- Hepatic impairment: Use with caution
+- Discontinuation syndrome: Taper gradually
+
+ADVERSE REACTIONS
+Most common adverse reactions (incidence ≥ 5%):
+- Headache (12%)
+- Nausea (9%)
+- Dizziness (7%)
+- Insomnia (6%)
+- Dry mouth (5%)
+
+DRUG INTERACTIONS
+- MAO inhibitors: Contraindicated
+- CYP3A4 inhibitors: May increase Neurocalm levels
+- CNS depressants: Enhanced sedative effect
+
+USE IN SPECIFIC POPULATIONS
+- Pregnancy: Category C
+- Nursing mothers: Caution advised
+- Pediatric use: Safety not established under 18 years
+- Geriatric use: No dose adjustment required
+
+CLINICAL STUDIES
+Neurocalm was studied in two 8-week, randomized, double-blind, placebo-controlled 
+trials involving 847 patients with GAD. Neurocalm demonstrated statistically 
+significant improvement compared to placebo on the Hamilton Anxiety Scale.
+
+Manufactured by: Zenith Pharmaceuticals, Inc.
+Distributed by: Zenith Pharmaceuticals, Inc.
+Revision Date: March 2023
