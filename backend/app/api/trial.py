@@ -11,9 +11,13 @@ No trial logic is implemented here - uses trial_graph.py for state enforcement.
 
 import asyncio
 import logging
-from typing import Optional
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..graph.trial_graph import (
     TrialState,
@@ -26,7 +30,7 @@ from ..graph.trial_graph import (
     TESTIMONY_STATES,
 )
 from .session import get_session, _sessions
-from .scoring import _live_scores as _scoring_live_scores
+from .scoring import _live_scores as _scoring_live_scores, _persist_live_scores
 from .auth import get_current_user_id
 from ..db.storage import get_transcript_storage
 
@@ -453,11 +457,11 @@ async def get_transcript(session_id: str, limit: Optional[int] = None):
 
 
 class RecordTranscriptRequest(BaseModel):
-    speaker: str
-    role: str
-    text: str
-    phase: str
-    event_type: Optional[str] = None
+    speaker: str = Field(..., max_length=200)
+    role: str = Field(..., pattern=r"^(attorney_plaintiff|attorney_defense|attorney|witness|judge|clerk|bailiff|narrator)$")
+    text: str = Field(..., max_length=50000)
+    phase: str = Field(..., max_length=100)
+    event_type: Optional[str] = Field(None, max_length=50)
 
 
 @router.post("/{session_id}/record-transcript")
@@ -479,12 +483,19 @@ async def record_transcript(session_id: str, request: RecordTranscriptRequest):
 # AI TURN ENDPOINT
 # =============================================================================
 
+VALID_AI_ACTIONS = {
+    "opening", "closing", "cross_question", "direct_question",
+    "witness_answer", "redirect_question", "redirect_answer",
+    "recross_question", "recross_answer",
+}
+
+
 class AITurnRequest(BaseModel):
     """Request for AI to take its turn."""
-    action: str  # "opening", "closing", "cross_question", "direct_question", "witness_answer"
-    witness_id: Optional[str] = None
-    is_teammate: bool = False  # True when requesting a same-side AI teammate to act
-    regenerate: bool = False  # True to force regeneration of cached content
+    action: str = Field(..., max_length=50)
+    witness_id: Optional[str] = Field(None, max_length=100)
+    is_teammate: bool = False
+    regenerate: bool = False
 
 
 class AITurnResponse(BaseModel):
@@ -531,6 +542,11 @@ async def ai_take_turn(session_id: str, request: AITurnRequest):
             ai_role_label = "Prosecution"
 
     action = request.action.lower()
+    if action not in VALID_AI_ACTIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid action. Must be one of: {', '.join(sorted(VALID_AI_ACTIONS))}"
+        )
     teammate_tag = " (Teammate)" if request.is_teammate else ""
 
     # AI turns bypass the normal speaker validation since they're triggered
@@ -592,35 +608,40 @@ async def ai_take_turn(session_id: str, request: AITurnRequest):
 
             # Record opening to trial memory and team shared
             session.trial_memory.record_opening(ai_side, text)
-            session.trial_memory.record_team_heard(
-                ai_side, speaker,
-                f"Opening statement delivered: {text[:200]}..."
-            )
-
-            # Opposing team analyzes the opening statement (background)
             try:
-                from ..services.strategic_analyzer import analyze_opening_for_teams
-                pt = ""
-                dt = ""
-                for sub in ("opening", "direct_cross", "closing"):
-                    pa = session.attorney_team.get(f"plaintiff_{sub}")
-                    if pa and pa.persona.case_theory:
-                        pt = pa.persona.case_theory
-                        break
-                for sub in ("opening", "direct_cross", "closing"):
-                    da = session.attorney_team.get(f"defense_{sub}")
-                    if da and da.persona.case_theory:
-                        dt = da.persona.case_theory
-                        break
-                asyncio.create_task(analyze_opening_for_teams(
-                    trial_memory=session.trial_memory,
-                    side_that_spoke=ai_side,
-                    opening_text=text,
-                    case_theory_plaintiff=pt,
-                    case_theory_defense=dt,
-                ))
-            except Exception as e:
-                logger.warning(f"Failed to launch opening analysis: {e}")
+                session.trial_memory.record_team_heard(
+                    ai_side,
+                    f"{ai_role_label} Opening Attorney{teammate_tag} ({attorney_name})",
+                    f"Opening statement delivered: {text[:200]}...",
+                )
+            except Exception:
+                pass
+
+            from ..config import ENABLE_STRATEGIC_ANALYSIS
+            if ENABLE_STRATEGIC_ANALYSIS:
+                try:
+                    from ..services.strategic_analyzer import analyze_opening_for_teams
+                    pt = ""
+                    dt = ""
+                    for sub in ("opening", "direct_cross", "closing"):
+                        pa = session.attorney_team.get(f"plaintiff_{sub}")
+                        if pa and pa.persona.case_theory:
+                            pt = pa.persona.case_theory
+                            break
+                    for sub in ("opening", "direct_cross", "closing"):
+                        da = session.attorney_team.get(f"defense_{sub}")
+                        if da and da.persona.case_theory:
+                            dt = da.persona.case_theory
+                            break
+                    asyncio.create_task(analyze_opening_for_teams(
+                        trial_memory=session.trial_memory,
+                        side_that_spoke=ai_side,
+                        opening_text=text,
+                        case_theory_plaintiff=pt,
+                        case_theory_defense=dt,
+                    ))
+                except Exception as e:
+                    logger.warning(f"Failed to launch opening analysis: {e}")
 
             return AITurnResponse(
                 success=True,
@@ -872,7 +893,7 @@ async def ai_take_turn(session_id: str, request: AITurnRequest):
         logger.error(f"AI turn failed: {e}", exc_info=True)
         return AITurnResponse(
             success=False, speaker="", role="", text="",
-            phase=saved_phase.value, message=f"AI generation failed: {str(e)}"
+            phase=saved_phase.value, message="AI generation failed"
         )
     finally:
         state.phase = saved_phase
@@ -895,11 +916,40 @@ class RestCaseRequest(BaseModel):
     side: str  # "prosecution"/"plaintiff" or "defense"
 
 
+def _resolve_witness_side(session, w) -> str:
+    """Determine which side a witness belongs to, respecting restrictions
+    and trial-prep assignments. Returns 'plaintiff' or 'defense'."""
+    wid = w.get("id", "")
+    name = w.get("name", "").lower()
+    called_by = w.get("called_by", "").lower()
+
+    # Hard restrictions from case packet override everything
+    restrictions = (session.case_data or {}).get("witness_calling_restrictions", {})
+    if restrictions:
+        for pn in restrictions.get("prosecution_only", []):
+            if pn.lower() in name or name in pn.lower():
+                return "plaintiff"
+        for dn in restrictions.get("defense_only", []):
+            if dn.lower() in name or name in dn.lower():
+                return "defense"
+
+    # For "either" witnesses, use the session's trial-prep assignment
+    if called_by == "either":
+        return getattr(session, "witness_assignments", {}).get(wid, "plaintiff")
+
+    if called_by in ("plaintiff", "prosecution"):
+        return "plaintiff"
+    if called_by == "defense":
+        return "defense"
+    return "plaintiff"
+
+
 def _ensure_witness_lists(session, state):
     """Populate prosecution/defense witness lists and witnesses_to_examine.
 
     Re-checks every time to catch witnesses that were added after initial setup
     (e.g. from section uploads that parsed new witness data).
+    Respects calling restrictions and trial-prep witness assignments.
     """
     case_witnesses = session.case_data.get("witnesses", []) if session.case_data else []
     existing_pros = set(state.prosecution_witnesses)
@@ -909,28 +959,34 @@ def _ensure_witness_lists(session, state):
         wid = w.get("id")
         if not wid or wid not in session.witnesses:
             continue
-        called_by = w.get("called_by", "").lower()
-        if called_by in ("plaintiff", "prosecution"):
-            if wid not in existing_pros:
-                state.prosecution_witnesses.append(wid)
-                existing_pros.add(wid)
-        elif called_by == "defense":
+
+        side = _resolve_witness_side(session, w)
+
+        if side == "defense":
             if wid not in existing_def:
                 state.defense_witnesses.append(wid)
                 existing_def.add(wid)
+            if wid in existing_pros:
+                state.prosecution_witnesses.remove(wid)
+                existing_pros.discard(wid)
         else:
             if wid not in existing_pros:
                 state.prosecution_witnesses.append(wid)
                 existing_pros.add(wid)
-        # Ensure every witness is in the pending list if not yet examined
+            if wid in existing_def:
+                state.defense_witnesses.remove(wid)
+                existing_def.discard(wid)
+
         if wid not in state.witnesses_to_examine and wid not in state.witnesses_examined:
             state.witnesses_to_examine.append(wid)
 
+    witness_assignments = getattr(session, "witness_assignments", {})
     logger.info(
-        f"Witness lists: prosecution={state.prosecution_witnesses}, "
+        f"Witness lists built: prosecution={state.prosecution_witnesses}, "
         f"defense={state.defense_witnesses}, "
         f"to_examine={state.witnesses_to_examine}, "
-        f"examined={state.witnesses_examined}"
+        f"examined={state.witnesses_examined}, "
+        f"witness_assignments={witness_assignments}"
     )
 
 
@@ -945,22 +1001,32 @@ async def get_witnesses(session_id: str):
     case_witnesses = session.case_data.get("witnesses", []) if session.case_data else []
     case_witness_map = {w.get("id"): w for w in case_witnesses}
 
+    witness_assignments = getattr(session, "witness_assignments", {})
     for wid, agent in session.witnesses.items():
         cw = case_witness_map.get(wid, {})
+        original_cb = (cw.get("called_by") or "unknown").lower()
+        if original_cb == "prosecution":
+            original_cb = "plaintiff"
         agent_cb = getattr(agent.persona, "called_by", None)
         if agent_cb:
             norm_cb = agent_cb
         else:
-            raw_cb = (cw.get("called_by") or "unknown").lower()
+            raw_cb = original_cb
             norm_cb = "plaintiff" if raw_cb in ("plaintiff", "prosecution", "either") else raw_cb
-        witnesses.append({
+        is_either = original_cb == "either"
+        entry = {
             "id": wid,
             "name": agent.persona.name,
             "called_by": norm_cb,
             "is_current": state.current_witness_id == wid,
             "is_examined": wid in state.witnesses_examined,
             "is_pending": wid in state.witnesses_to_examine,
-        })
+        }
+        if is_either:
+            entry["original_side"] = "either"
+            entry["assigned_side"] = witness_assignments.get(wid, "plaintiff")
+            entry["is_reassignable"] = True
+        witnesses.append(entry)
 
     return {
         "session_id": session_id,
@@ -977,6 +1043,7 @@ async def get_witnesses(session_id: str):
         "defense_rested": state.defense_rested,
         "prosecution_witnesses": state.prosecution_witnesses,
         "defense_witnesses": state.defense_witnesses,
+        "witness_calling_restrictions": state.witness_calling_restrictions or {},
         "exam_status": {
             "direct_complete": state.direct_complete,
             "cross_complete": state.cross_complete,
@@ -992,7 +1059,7 @@ async def get_witnesses(session_id: str):
 @router.post("/{session_id}/call-witness")
 async def call_witness_to_stand(session_id: str, request: CallWitnessRequest):
     """Call a witness to the stand."""
-    from ..graph.trial_graph import call_witness as graph_call_witness
+    from ..graph.trial_graph import call_witness as graph_call_witness, validate_witness_calling
     session = get_session(session_id)
     state = session.trial_state
     _ensure_witness_lists(session, state)
@@ -1003,8 +1070,28 @@ async def call_witness_to_stand(session_id: str, request: CallWitnessRequest):
 
     agent = session.witnesses[witness_id]
     witness_name = agent.persona.name
+    calling_side = request.calling_side or state.case_in_chief
 
-    graph_call_witness(state, witness_id, request.calling_side)
+    # Enforce: each side may only call witnesses on their own list
+    if calling_side in ("prosecution", "plaintiff"):
+        if witness_id not in state.prosecution_witnesses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{witness_name} is not a prosecution witness and cannot be called by the prosecution."
+            )
+    elif calling_side == "defense":
+        if witness_id not in state.defense_witnesses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{witness_name} is not a defense witness and cannot be called by the defense."
+            )
+
+    # Enforce witness_calling_restrictions from the case packet
+    allowed, err_msg = validate_witness_calling(state, witness_name, calling_side)
+    if not allowed:
+        raise HTTPException(status_code=400, detail=err_msg)
+
+    graph_call_witness(state, witness_id, calling_side)
 
     if state.last_error:
         err = state.last_error
@@ -1210,13 +1297,19 @@ async def rest_case_endpoint(session_id: str, request: RestCaseRequest):
     }
 
 
+_DEFAULT_DIRECT = int(os.environ.get("DEFAULT_DIRECT_QUESTIONS", "3"))
+_DEFAULT_CROSS = int(os.environ.get("DEFAULT_CROSS_QUESTIONS", "3"))
+_DEFAULT_REDIRECT = int(os.environ.get("DEFAULT_REDIRECT_QUESTIONS", "2"))
+_DEFAULT_RECROSS = int(os.environ.get("DEFAULT_RECROSS_QUESTIONS", "1"))
+
+
 class AutoExamRequest(BaseModel):
     witness_id: str
     calling_side: str  # "plaintiff" or "defense"
-    num_direct_questions: int = 5
-    num_cross_questions: int = 4
-    num_redirect_questions: int = 3
-    num_recross_questions: int = 2
+    num_direct_questions: int = _DEFAULT_DIRECT
+    num_cross_questions: int = _DEFAULT_CROSS
+    num_redirect_questions: int = _DEFAULT_REDIRECT
+    num_recross_questions: int = _DEFAULT_RECROSS
     skip_redirect: bool = False
     skip_recross: bool = False
 
@@ -1241,26 +1334,60 @@ async def auto_examine_witness(session_id: str, request: AutoExamRequest):
 
     witness_id = request.witness_id
     logger.info(
-        f"Auto-examine requested for witness={witness_id}, calling_side={request.calling_side}, "
-        f"phase={state.phase.value}, current_witness={state.current_witness_id}, "
+        f"Auto-examine requested: witness={witness_id}, calling_side={request.calling_side}, "
+        f"phase={state.phase.value}, case_in_chief={state.case_in_chief}, "
+        f"prosecution_witnesses={state.prosecution_witnesses}, "
+        f"defense_witnesses={state.defense_witnesses}, "
         f"to_examine={state.witnesses_to_examine}, examined={state.witnesses_examined}"
     )
 
     if witness_id not in session.witnesses:
         raise HTTPException(status_code=404, detail=f"Witness '{witness_id}' not found in session (available: {list(session.witnesses.keys())})")
 
+    witness_agent = session.witnesses[witness_id]
+    witness_name = witness_agent.persona.name
+
+    # Normalize calling_side: "prosecution" -> "plaintiff" for internal lookups
+    raw_calling = request.calling_side
+    calling_side = "plaintiff" if raw_calling in ("plaintiff", "prosecution") else "defense"
+
+    # Enforce: each side may only call witnesses on their own list
+    from ..graph.trial_graph import validate_witness_calling
+    if calling_side == "plaintiff":
+        if witness_id not in state.prosecution_witnesses:
+            logger.warning(
+                f"BLOCKED: {witness_name} ({witness_id}) is NOT in prosecution_witnesses "
+                f"{state.prosecution_witnesses}. Request calling_side={request.calling_side}"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"{witness_name} is not a prosecution witness and cannot be called by the prosecution."
+            )
+    elif calling_side == "defense":
+        if witness_id not in state.defense_witnesses:
+            logger.warning(
+                f"BLOCKED: {witness_name} ({witness_id}) is NOT in defense_witnesses "
+                f"{state.defense_witnesses}. Request calling_side={request.calling_side}"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"{witness_name} is not a defense witness and cannot be called by the defense."
+            )
+
+    logger.info(f"ALLOWED: {calling_side} calling {witness_name} ({witness_id})")
+
+    # Enforce witness_calling_restrictions from case packet
+    allowed, err_msg = validate_witness_calling(state, witness_name, calling_side)
+    if not allowed:
+        raise HTTPException(status_code=400, detail=err_msg)
+
     # Ensure witness is in the pending list
     if witness_id not in state.witnesses_to_examine and witness_id not in state.witnesses_examined:
         state.witnesses_to_examine.append(witness_id)
 
-    witness_agent = session.witnesses[witness_id]
-    witness_name = witness_agent.persona.name
     logger.info(f"Examining witness: {witness_name} (id={witness_id}), affidavit length={len(witness_agent.persona.affidavit or '')}")
 
     human_side = "plaintiff" if session.human_role == Role.ATTORNEY_PLAINTIFF else "defense"
-    # Normalize calling_side: "prosecution" -> "plaintiff" for internal lookups
-    raw_calling = request.calling_side
-    calling_side = "plaintiff" if raw_calling in ("plaintiff", "prosecution") else "defense"
     opposing_side = "defense" if calling_side == "plaintiff" else "plaintiff"
 
     calling_label = "Prosecution" if calling_side == "plaintiff" else "Defense"
@@ -1650,34 +1777,35 @@ async def auto_examine_witness(session_id: str, request: AutoExamRequest):
         "witness_excused", f"{witness_name} excused", state.phase.value
     )
 
-    # --- Live strategic analysis: each team reviews what just happened ---
-    try:
-        from ..services.strategic_analyzer import analyze_examination_for_teams
+    from ..config import ENABLE_STRATEGIC_ANALYSIS
+    if ENABLE_STRATEGIC_ANALYSIS:
+        try:
+            from ..services.strategic_analyzer import analyze_examination_for_teams
 
-        pt = ""
-        dt = ""
-        for sub in ("opening", "direct_cross", "closing"):
-            pa = session.attorney_team.get(f"plaintiff_{sub}")
-            if pa and pa.persona.case_theory:
-                pt = pa.persona.case_theory
-                break
-        for sub in ("opening", "direct_cross", "closing"):
-            da = session.attorney_team.get(f"defense_{sub}")
-            if da and da.persona.case_theory:
-                dt = da.persona.case_theory
-                break
+            pt = ""
+            dt = ""
+            for sub in ("opening", "direct_cross", "closing"):
+                pa = session.attorney_team.get(f"plaintiff_{sub}")
+                if pa and pa.persona.case_theory:
+                    pt = pa.persona.case_theory
+                    break
+            for sub in ("opening", "direct_cross", "closing"):
+                da = session.attorney_team.get(f"defense_{sub}")
+                if da and da.persona.case_theory:
+                    dt = da.persona.case_theory
+                    break
 
-        asyncio.create_task(analyze_examination_for_teams(
-            trial_memory=trial_memory,
-            witness_id=witness_id,
-            witness_name=witness_name,
-            exam_type="full_witness",
-            calling_side=calling_side,
-            case_theory_plaintiff=pt,
-            case_theory_defense=dt,
-        ))
-    except Exception as e:
-        logger.warning(f"Failed to launch strategic analysis: {e}")
+            asyncio.create_task(analyze_examination_for_teams(
+                trial_memory=trial_memory,
+                witness_id=witness_id,
+                witness_name=witness_name,
+                exam_type="full_witness",
+                calling_side=calling_side,
+                case_theory_plaintiff=pt,
+                case_theory_defense=dt,
+            ))
+        except Exception as e:
+            logger.warning(f"Failed to launch strategic analysis: {e}")
 
     # Count remaining witnesses for the current case-in-chief
     cic_witnesses = state.prosecution_witnesses if state.case_in_chief == "prosecution" else state.defense_witnesses
@@ -1704,63 +1832,51 @@ async def auto_examine_witness(session_id: str, request: AutoExamRequest):
         try:
             judge = session.judges[0]
             scores = {}
-            for side in ["plaintiff", "defense"]:
+            opposing = "defense" if calling_side == "plaintiff" else "plaintiff"
+            sides_to_score = [calling_side, opposing]
+            for side in sides_to_score:
                 role = Role.ATTORNEY_PLAINTIFF if side == "plaintiff" else Role.ATTORNEY_DEFENSE
-                all_entries = [e for e in state.transcript if e.get("role") == f"attorney_{side}"]
-                if not all_entries:
+                exam_entries = [
+                    e for e in state.transcript
+                    if e.get("role") == f"attorney_{side}"
+                    and (e.get("event_type") or "").lower() in _EXAM_EVENTS
+                ]
+                if not exam_entries:
                     continue
-                subrole_entries: Dict[str, list] = {}
-                for e in all_entries:
-                    evt = (e.get("event_type") or "").lower()
-                    if evt in _EVENT_TO_SUBROLE:
-                        sr = _EVENT_TO_SUBROLE[evt]
-                    elif evt in _EXAM_EVENTS:
-                        sr = "direct_cross"
-                    else:
-                        sr = "direct_cross"
-                    subrole_entries.setdefault(sr, []).append(e)
-
-                for sr, entries in subrole_entries.items():
-                    score_key = f"attorney_{side}_{sr}"
-                    from ..agents import get_categories_for_subrole
-                    cats = get_categories_for_subrole(sr)
-                    ballot = judge.score_participant(
-                        participant_role=role,
-                        participant_id=score_key,
-                        transcript=entries,
-                        trial_memory=trial_memory,
-                        categories=cats,
-                    )
-                    att_name = None
-                    for e in entries:
-                        sp = e.get("speaker", "")
-                        if sp:
-                            if "(" in sp and sp.endswith(")"):
-                                att_name = sp.split("(")[-1].rstrip(")")
-                            else:
-                                att_name = sp
-                            break
-                    if not att_name:
-                        agent = session.attorney_team.get(f"{side}_{sr}")
-                        if agent:
-                            att_name = agent.persona.name
-                    if not att_name:
-                        agent = session.attorneys.get(side)
-                        att_name = agent.persona.name if agent else ("Prosecution" if side == "plaintiff" else "Defense")
-                    cat_scores = {
-                        cat.value: {"score": cs.score, "justification": cs.justification}
-                        for cat, cs in ballot.scores.items()
-                    }
-                    scores[score_key] = {
-                        "role": f"attorney_{side}",
-                        "name": att_name,
-                        "attorney_sub_role": _SUBROLE_LABELS.get(sr, "Attorney"),
-                        "side": "Prosecution" if side == "plaintiff" else "Defense",
-                        "average": round(ballot.average_score(), 1),
-                        "total": ballot.total_score(),
-                        "categories": cat_scores,
-                        "comments": ballot.overall_comments,
-                    }
+                sr = "direct_cross"
+                score_key = f"attorney_{side}_{sr}"
+                from ..agents import get_categories_for_subrole
+                cats = get_categories_for_subrole(sr)
+                ballot = judge.score_participant(
+                    participant_role=role,
+                    participant_id=score_key,
+                    transcript=exam_entries,
+                    trial_memory=trial_memory,
+                    categories=cats,
+                )
+                att_name = None
+                for e in exam_entries:
+                    sp = e.get("speaker", "")
+                    if sp:
+                        att_name = sp.split("(")[-1].rstrip(")") if "(" in sp and sp.endswith(")") else sp
+                        break
+                if not att_name:
+                    agent = session.attorney_team.get(f"{side}_{sr}") or session.attorneys.get(side)
+                    att_name = agent.persona.name if agent else ("Prosecution" if side == "plaintiff" else "Defense")
+                cat_scores = {
+                    cat.value: {"score": cs.score, "justification": cs.justification}
+                    for cat, cs in ballot.scores.items()
+                }
+                scores[score_key] = {
+                    "role": f"attorney_{side}",
+                    "name": att_name,
+                    "attorney_sub_role": _SUBROLE_LABELS.get(sr, "Attorney"),
+                    "side": "Prosecution" if side == "plaintiff" else "Defense",
+                    "average": round(ballot.average_score(), 1),
+                    "total": ballot.total_score(),
+                    "categories": cat_scores,
+                    "comments": ballot.overall_comments,
+                }
 
             # Score the witness that was just examined
             witness_entries = [e for e in state.transcript if e.get("witness_id") == witness_id]
@@ -1792,11 +1908,15 @@ async def auto_examine_witness(session_id: str, request: AutoExamRequest):
                     "comments": ballot.overall_comments,
                 }
             live_scores = scores
-            _scoring_live_scores[session_id] = {
-                "scores": scores,
+            existing = _scoring_live_scores.get(session_id, {})
+            merged_scores = {**existing.get("scores", {}), **scores}
+            merged_data = {
+                "scores": merged_scores,
                 "phase": state.phase.value,
                 "transcript_length": len(state.transcript),
             }
+            _scoring_live_scores[session_id] = merged_data
+            _persist_live_scores(session_id, merged_data)
         except Exception as e:
             logger.warning(f"Live scoring after witness failed: {e}")
 
@@ -1853,9 +1973,9 @@ _tts_text_cache: dict = {}
 
 
 class AITTSRequest(BaseModel):
-    text: str
-    role: str
-    speaker_name: Optional[str] = None
+    text: str = Field(..., max_length=10000)
+    role: str = Field(..., max_length=50)
+    speaker_name: Optional[str] = Field(None, max_length=200)
 
 
 @router.post("/{session_id}/ai-tts")
@@ -1969,6 +2089,14 @@ async def generate_ai_tts(session_id: str, request: AITTSRequest):
     _ai_audio_cache[segment.segment_id] = segment.audio_data
     _tts_text_cache[cache_key] = segment.audio_data
 
+    # Persist to Supabase so recorded trials have audio available
+    try:
+        from ..main import _tts_cache_key, _upload_to_supabase
+        supabase_key = _tts_cache_key(request.text, request.role, request.speaker_name or "")
+        _upload_to_supabase(supabase_key, segment.audio_data)
+    except Exception as e:
+        logger.warning(f"Failed to persist TTS to Supabase: {e}")
+
     from fastapi.responses import StreamingResponse
     import io
 
@@ -2061,6 +2189,28 @@ async def save_transcript(session_id: str, user_id: str = Depends(get_current_us
     return {"status": "saved", "entry_count": len(session.trial_state.transcript)}
 
 
+@router.get("/transcripts/public")
+async def list_public_transcripts():
+    """List completed trial transcripts that have stored data for public viewing."""
+    storage = get_transcript_storage()
+    all_transcripts = storage.list_transcripts("default")
+    completed = [
+        t for t in all_transcripts
+        if t.get("storage_path")
+        and t.get("phases_completed")
+        and t["phases_completed"][-1].lower() in ("scoring", "completed")
+    ]
+    from ..data import get_demo_case_by_id
+    for t in completed:
+        if not t.get("case_name") or t["case_name"] == t.get("session_id") or len(t["case_name"]) < 10:
+            case_info = get_demo_case_by_id(t.get("case_id", ""))
+            t["case_name"] = case_info.get("title", t.get("case_id", "Mock Trial")) if case_info else t.get("case_id", "Mock Trial Session")
+        if t.get("human_role", "").startswith("Role."):
+            t["human_role"] = t["human_role"].replace("Role.", "").lower()
+    completed.sort(key=lambda x: x.get("entry_count", 0), reverse=True)
+    return {"transcripts": completed[:1]}
+
+
 @router.get("/transcripts/history")
 async def list_transcript_history(user_id: str = Depends(get_current_user_id)):
     """List all saved trial transcripts for the current user."""
@@ -2071,9 +2221,219 @@ async def list_transcript_history(user_id: str = Depends(get_current_user_id)):
 
 @router.get("/transcripts/{session_id}")
 async def get_transcript_detail(session_id: str):
-    """Get full transcript data from storage."""
+    """Get full transcript data from storage, with audio cache keys."""
     storage = get_transcript_storage()
     data = storage.get_transcript(session_id)
     if not data:
         raise HTTPException(status_code=404, detail="Transcript not found")
+
+    # Compute audio cache keys for each transcript entry and check availability
+    try:
+        from ..main import _tts_cache_key, _list_existing_tts_keys
+        existing_keys = _list_existing_tts_keys()
+        audio_map = {}
+        for i, entry in enumerate(data.get("transcript", [])):
+            text = entry.get("text") or entry.get("content") or ""
+            role = entry.get("role", "narrator")
+            speaker = entry.get("speaker", "")
+            if text.strip():
+                key = _tts_cache_key(text, role, speaker)
+                if key in existing_keys:
+                    audio_map[str(i)] = key
+        data["audio_keys"] = audio_map
+    except Exception as e:
+        logger.warning(f"Could not compute audio keys: {e}")
+        data["audio_keys"] = {}
+
     return data
+
+
+# =============================================================================
+# EMAIL TRANSCRIPT & SCORES
+# =============================================================================
+
+class EmailReportRequest(BaseModel):
+    recipients: List[str]
+    include_transcript: bool = True
+    include_scores: bool = True
+    subject: Optional[str] = None
+    sender_name: Optional[str] = None
+
+
+def _build_transcript_html(session, scores: dict, include_transcript: bool, include_scores: bool) -> str:
+    """Build a formatted HTML email body with transcript and scores."""
+    case_name = getattr(session, "case_name", None) or "Mock Trial"
+    state = session.trial_state
+
+    lines = [
+        "<html><body style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;'>",
+        f"<h1 style='color: #1e293b; border-bottom: 3px solid #3b82f6; padding-bottom: 10px;'>{case_name}</h1>",
+        f"<p style='color: #64748b;'>Phase: {state.phase.value} &nbsp;|&nbsp; Session: {getattr(session, 'session_id', 'N/A')}</p>",
+    ]
+
+    if include_scores and scores:
+        lines.append("<h2 style='color: #1e293b; margin-top: 30px;'>Scores &amp; Performance</h2>")
+        lines.append("<table style='width: 100%; border-collapse: collapse; margin-bottom: 20px;'>")
+        lines.append(
+            "<tr style='background: #1e293b; color: white;'>"
+            "<th style='padding: 10px; text-align: left;'>Participant</th>"
+            "<th style='padding: 10px; text-align: left;'>Role</th>"
+            "<th style='padding: 10px; text-align: left;'>Side</th>"
+            "<th style='padding: 10px; text-align: center;'>Score</th>"
+            "</tr>"
+        )
+        for key, s in scores.items():
+            bg = "#f8fafc" if "plaintiff" in key else "#fef2f2"
+            name = s.get("name", key)
+            role = s.get("attorney_sub_role") or s.get("witness_role") or s.get("role", "")
+            side = s.get("side", "")
+            avg = s.get("average", 0)
+            score_color = "#059669" if avg >= 7 else "#d97706" if avg >= 5 else "#dc2626"
+            lines.append(
+                f"<tr style='background: {bg}; border-bottom: 1px solid #e2e8f0;'>"
+                f"<td style='padding: 10px;'><strong>{name}</strong></td>"
+                f"<td style='padding: 10px;'>{role}</td>"
+                f"<td style='padding: 10px;'>{side}</td>"
+                f"<td style='padding: 10px; text-align: center;'>"
+                f"<span style='color: {score_color}; font-weight: bold; font-size: 18px;'>{avg}</span>/10</td>"
+                f"</tr>"
+            )
+
+            cats = s.get("categories", {})
+            if cats:
+                lines.append(
+                    f"<tr style='background: {bg};'><td colspan='4' style='padding: 5px 10px 15px 30px;'>"
+                    "<table style='width: 100%; font-size: 13px;'>"
+                )
+                for cat, detail in cats.items():
+                    c_score = detail.get("score", detail) if isinstance(detail, dict) else detail
+                    c_just = detail.get("justification", "") if isinstance(detail, dict) else ""
+                    cat_label = cat.replace("_", " ").title()
+                    lines.append(
+                        f"<tr><td style='padding: 3px 0; color: #64748b;'>{cat_label}</td>"
+                        f"<td style='padding: 3px 0; width: 50px; text-align: right; font-weight: bold;'>{c_score}/10</td></tr>"
+                    )
+                    if c_just:
+                        lines.append(
+                            f"<tr><td colspan='2' style='padding: 0 0 6px 10px; color: #94a3b8; font-style: italic; font-size: 12px;'>{c_just}</td></tr>"
+                        )
+                lines.append("</table></td></tr>")
+
+            comments = s.get("comments")
+            if comments:
+                lines.append(
+                    f"<tr style='background: {bg};'><td colspan='4' style='padding: 5px 10px 15px 30px; color: #6b7280; font-style: italic; font-size: 13px;'>"
+                    f"<strong>Judge:</strong> {comments}</td></tr>"
+                )
+
+        lines.append("</table>")
+
+    if include_transcript and state.transcript:
+        lines.append("<h2 style='color: #1e293b; margin-top: 30px;'>Trial Transcript</h2>")
+        phase_labels = {
+            "opening": "Opening Statements",
+            "OPENING": "Opening Statements",
+            "prosecution_case": "Prosecution Case-in-Chief",
+            "defense_case": "Defense Case-in-Chief",
+            "closing": "Closing Arguments",
+            "CLOSING": "Closing Arguments",
+        }
+        current_phase = None
+        for entry in state.transcript:
+            entry_phase = entry.get("phase", "")
+            if entry_phase and entry_phase != current_phase:
+                current_phase = entry_phase
+                label = phase_labels.get(entry_phase, entry_phase.replace("_", " ").title())
+                lines.append(
+                    f"<div style='margin: 20px 0 10px 0; padding: 8px 15px; background: #f1f5f9; "
+                    f"border-left: 4px solid #3b82f6; font-weight: bold; color: #1e293b;'>{label}</div>"
+                )
+
+            speaker = entry.get("speaker", entry.get("role", "Unknown"))
+            text = entry.get("text", "")
+            role = entry.get("role", "")
+
+            if "attorney_plaintiff" in role:
+                badge_bg, badge_color = "#dbeafe", "#1d4ed8"
+            elif "attorney_defense" in role:
+                badge_bg, badge_color = "#fee2e2", "#dc2626"
+            elif role == "witness":
+                badge_bg, badge_color = "#fef3c7", "#92400e"
+            elif role == "judge":
+                badge_bg, badge_color = "#e0e7ff", "#4338ca"
+            else:
+                badge_bg, badge_color = "#f1f5f9", "#475569"
+
+            lines.append(
+                f"<div style='margin: 8px 0; padding: 10px 15px; border-radius: 8px; background: #fafafa; border: 1px solid #e2e8f0;'>"
+                f"<span style='display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; "
+                f"background: {badge_bg}; color: {badge_color}; margin-right: 8px;'>{speaker}</span>"
+                f"<span style='color: #334155; line-height: 1.6;'>{text}</span>"
+                f"</div>"
+            )
+
+    lines.append(
+        "<hr style='margin-top: 40px; border: none; border-top: 1px solid #e2e8f0;'/>"
+        "<p style='color: #94a3b8; font-size: 12px; text-align: center;'>Generated by Mock Trial AI</p>"
+        "</body></html>"
+    )
+    return "\n".join(lines)
+
+
+@router.post("/{session_id}/email-report")
+async def email_report(session_id: str, request: EmailReportRequest):
+    """Send trial transcript and/or scores via email."""
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASSWORD")
+    smtp_from = os.getenv("SMTP_FROM", smtp_user)
+
+    if not smtp_host or not smtp_user or not smtp_pass:
+        raise HTTPException(
+            status_code=400,
+            detail="Email not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in backend .env",
+        )
+
+    if not request.recipients:
+        raise HTTPException(status_code=400, detail="At least one recipient email is required")
+
+    session = get_session(session_id)
+
+    scores = {}
+    if request.include_scores:
+        from .scoring import _live_scores, _load_live_scores_from_db
+        cached = _live_scores.get(session_id)
+        if not cached:
+            cached = _load_live_scores_from_db(session_id)
+        if cached:
+            scores = cached.get("scores", {})
+
+    case_name = getattr(session, "case_name", None) or "Mock Trial"
+    subject = request.subject or f"Mock Trial Report: {case_name}"
+    sender_name = request.sender_name or "Mock Trial AI"
+
+    html_body = _build_transcript_html(session, scores, request.include_transcript, request.include_scores)
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{sender_name} <{smtp_from}>"
+    msg["To"] = ", ".join(request.recipients)
+    msg.attach(MIMEText(html_body, "html"))
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port)
+            server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.sendmail(smtp_from, request.recipients, msg.as_string())
+        server.quit()
+    except smtplib.SMTPAuthenticationError:
+        raise HTTPException(status_code=401, detail="SMTP authentication failed. Check SMTP_USER and SMTP_PASSWORD.")
+    except Exception as e:
+        logger.error(f"Email send failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+
+    return {"success": True, "recipients": request.recipients, "message": f"Report sent to {len(request.recipients)} recipient(s)"}

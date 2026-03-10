@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiFetch, API_BASE } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 
 interface TranscriptHistoryItem {
   id: string;
@@ -64,6 +64,8 @@ function formatDate(iso: string) {
 
 export default function HistoryPage() {
   const router = useRouter();
+  const [userInitial, setUserInitial] = useState("U");
+  const [authReady, setAuthReady] = useState(false);
   const [items, setItems] = useState<TranscriptHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -71,12 +73,20 @@ export default function HistoryPage() {
   const [loadingTranscript, setLoadingTranscript] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/trial/transcripts/history`)
+    createClient().auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserInitial(data.user.email[0].toUpperCase());
+      setAuthReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!authReady) return;
+    apiFetch(`${API_BASE}/api/trial/transcripts/history`)
       .then((r) => r.json())
       .then((data) => setItems(data.transcripts || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [authReady]);
 
   const toggleExpand = async (sessionId: string) => {
     if (expandedId === sessionId) {
@@ -87,7 +97,7 @@ export default function HistoryPage() {
     if (!transcriptData[sessionId]) {
       setLoadingTranscript(sessionId);
       try {
-        const res = await fetch(`${API_BASE}/api/trial/transcripts/${sessionId}`);
+        const res = await apiFetch(`${API_BASE}/api/trial/transcripts/${sessionId}`);
         if (res.ok) {
           const data = await res.json();
           setTranscriptData((prev) => ({ ...prev, [sessionId]: data }));
@@ -107,18 +117,27 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/60 backdrop-blur-sm sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => router.push("/")}
-            className="flex items-center gap-2 text-white hover:text-amber-300 transition-colors"
-          >
-            <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
-            </svg>
-            <span className="text-lg font-bold">AI Mock Trial</span>
-          </button>
-          <h1 className="text-slate-300 font-medium">Trial History</h1>
+      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 py-0">
+          <div className="flex items-center justify-between h-16">
+            <button onClick={() => router.push("/")} className="flex items-center gap-2.5 text-white hover:opacity-90 transition-opacity">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
+                </svg>
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-base font-bold tracking-tight">MockPrep<span className="text-amber-400">AI</span></span>
+              </div>
+            </button>
+            <nav className="hidden md:flex items-center gap-1">
+              <button onClick={() => router.push("/")} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">Dashboard</button>
+              <button className="px-4 py-2 text-sm font-medium text-white bg-slate-800/60 rounded-lg transition-colors">Trial History</button>
+              <button onClick={() => router.push("/about")} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">Who We Are</button>
+              <button onClick={() => router.push("/contact")} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">Contact</button>
+            </nav>
+            <button onClick={() => router.push("/profile")} className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-bold hover:opacity-80 transition-opacity" title="Profile">{userInitial}</button>
+          </div>
         </div>
       </header>
 

@@ -249,8 +249,7 @@ class TTSService:
     - Interrupted audio must stop immediately
     """
     
-    # gpt-4o-mini-tts supports the `instructions` parameter for emotional delivery
-    MODEL = "gpt-4o-mini-tts"
+    MODEL = os.environ.get("TTS_MODEL", "tts-1")
     
     # Audio format — mp3 for universal browser compatibility
     RESPONSE_FORMAT = "mp3"

@@ -77,14 +77,14 @@ export default function LoginPage() {
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) {
-        setError(error.message);
+        setError("Sign up failed. Please check your details and try again.");
       } else {
         setMessage("Check your email for a confirmation link.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setError(error.message);
+        setError("Invalid email or password.");
       } else {
         window.location.href = "/";
       }
@@ -106,13 +106,15 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-2">
-            <svg className="w-10 h-10 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
-            </svg>
-            <h1 className="text-3xl font-bold text-white">AI Mock Trial</h1>
+          <div className="inline-flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold text-white">MockPrep<span className="text-amber-400">AI</span></h1>
           </div>
-          <p className="text-slate-400 text-sm">Master the Art of Trial Advocacy</p>
+          <p className="text-slate-500 text-sm">AI-Powered Mock Trial Preparation</p>
         </div>
 
         {/* Card */}
@@ -152,9 +154,9 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-colors"
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters"
               />
             </div>
             <button

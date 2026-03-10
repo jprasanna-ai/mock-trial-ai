@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { ChevronDownIcon } from "@/components/ui/icons";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiFetch, API_BASE } from "@/lib/api";
 
 // =============================================================================
 // TYPES
@@ -723,7 +722,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
   const loadTeam = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/persona/${sessionId}`);
+      const res = await apiFetch(`${API_BASE}/api/persona/${sessionId}`);
       if (res.ok) {
         const data = await res.json();
         setTeam(data);
@@ -738,7 +737,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
 
   const loadLlmConfig = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/persona/${sessionId}/llm-config`);
+      const res = await apiFetch(`${API_BASE}/api/persona/${sessionId}/llm-config`);
       if (res.ok) {
         const data = await res.json();
         setLlmConfig(data);
@@ -750,7 +749,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
 
   const loadAgentConfigs = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/persona/${sessionId}/agent-configs`);
+      const res = await apiFetch(`${API_BASE}/api/persona/${sessionId}/agent-configs`);
       if (res.ok) {
         const data = await res.json();
         const prompts: Record<string, string> = {};
@@ -766,7 +765,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
   const saveLlmConfig = async (updates: Record<string, any>) => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/api/persona/${sessionId}/llm-config`, {
+      const res = await apiFetch(`${API_BASE}/api/persona/${sessionId}/llm-config`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -798,7 +797,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
   const saveAttorney = async (side: "prosecution" | "defense", index: number, attorney: AttorneyPersona) => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/api/persona/${sessionId}/${side}/attorney/${index}`, {
+      const res = await apiFetch(`${API_BASE}/api/persona/${sessionId}/${side}/attorney/${index}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(attorney),
@@ -830,7 +829,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
   const saveJudge = async (index: number, judge: JudgePersona) => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/api/persona/${sessionId}/judge/${index}`, {
+      const res = await apiFetch(`${API_BASE}/api/persona/${sessionId}/judge/${index}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(judge),
@@ -846,7 +845,7 @@ export default function PersonaCustomizer({ sessionId, onClose, humanRole, attor
   const resetAll = async () => {
     setIsSaving(true);
     try {
-      await fetch(`${API_BASE}/api/persona/${sessionId}`, { method: "DELETE" });
+      await apiFetch(`${API_BASE}/api/persona/${sessionId}`, { method: "DELETE" });
       await loadTeam();
       showSaved();
     } catch (err) {

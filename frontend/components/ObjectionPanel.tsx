@@ -14,6 +14,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { apiFetch, API_BASE } from "@/lib/api";
 
 // =============================================================================
 // TYPES
@@ -265,7 +266,7 @@ export function ObjectionPanel({
       onObjectionRaised?.(type);
 
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${apiBaseUrl}/api/trial/${sessionId}/objection`,
           {
             method: "POST",

@@ -10,6 +10,7 @@ Per ARCHITECTURE.md:
 """
 
 import os
+import uuid
 import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -37,12 +38,13 @@ def get_supabase_client() -> Client:
     
     if _supabase_client is None:
         url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
+        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         
         if not url or not key:
             raise ValueError(
-                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) "
-                "must be set in environment variables"
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY "
+                "must be set in environment variables. "
+                "Do NOT use SUPABASE_ANON_KEY for backend operations."
             )
         
         _supabase_client = create_client(url, key)
@@ -73,6 +75,7 @@ class Tables:
     USER_FAVORITES = "user_favorites"
     RECENT_CASES = "recent_cases"
     UPLOADED_CASES = "uploaded_cases"
+    HIDDEN_CASES = "hidden_cases"
     AGENT_PREP = "agent_prep_materials"
 
 
@@ -89,7 +92,9 @@ class SupabaseSessionRepository:
     def create_session(
         self,
         session_id: str,
-        status: str = "created"
+        status: str = "created",
+        case_id: Optional[str] = None,
+        human_role: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new session."""
         data = {
@@ -97,6 +102,10 @@ class SupabaseSessionRepository:
             "status": status,
             "created_at": datetime.utcnow().isoformat(),
         }
+        if case_id:
+            data["case_id"] = case_id
+        if human_role:
+            data["human_role"] = human_role
         result = self.client.table(Tables.SESSIONS).insert(data).execute()
         return result.data[0] if result.data else data
     
@@ -123,23 +132,31 @@ class SupabaseSessionRepository:
     def add_participant(
         self,
         session_id: str,
-        participant_id: str,
         role: str,
         name: str,
         is_human: bool = False,
+        participant_id: Optional[str] = None,
         **extra
     ) -> Dict[str, Any]:
-        """Add a participant to a session."""
+        """Add a participant to a session. Auto-generates ID if not provided."""
+        pid = participant_id or str(uuid.uuid4())
+        serialisable_extra = {}
+        for k, v in extra.items():
+            if isinstance(v, dict) or isinstance(v, list) or isinstance(v, (str, int, float, bool)) or v is None:
+                serialisable_extra[k] = v
         data = {
-            "id": participant_id,
+            "id": pid,
             "session_id": session_id,
             "role": role,
             "name": name,
             "is_human": is_human,
             "created_at": datetime.utcnow().isoformat(),
-            **extra
+            **serialisable_extra,
         }
-        result = self.client.table(Tables.PARTICIPANTS).insert(data).execute()
+        try:
+            result = self.client.table(Tables.PARTICIPANTS).upsert(data, on_conflict="id").execute()
+        except Exception:
+            result = self.client.table(Tables.PARTICIPANTS).insert(data).execute()
         return result.data[0] if result.data else data
     
     def get_participants(self, session_id: str) -> List[Dict[str, Any]]:
@@ -221,16 +238,18 @@ class SupabaseScoringRepository:
         """Get all scoring results for a session."""
         result = self.client.table(Tables.SCORING_RESULTS).select("*").eq("session_id", session_id).execute()
         return result.data or []
-    
-    def get_leaderboard(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """Get top scores across all sessions."""
-        result = (
-            self.client.table(Tables.SCORING_RESULTS)
-            .select("*")
-            .order("overall_average", desc=True)
-            .limit(limit)
-            .execute()
-        )
+
+    def get_ballots(self, scoring_result_id: str) -> List[Dict[str, Any]]:
+        """Get all ballots for a scoring result."""
+        result = self.client.table(Tables.BALLOTS).select("*").eq("scoring_result_id", scoring_result_id).execute()
+        return result.data or []
+
+    def get_leaderboard(self, session_id: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get top scores, optionally filtered by session."""
+        query = self.client.table(Tables.SCORING_RESULTS).select("*")
+        if session_id:
+            query = query.eq("session_id", session_id)
+        result = query.order("overall_average", desc=True).limit(limit).execute()
         return result.data or []
 
 
@@ -349,7 +368,6 @@ class SupabasePrepMaterialsRepository:
         generation_status: Dict = None,
     ) -> Dict[str, Any]:
         """Create prep materials for a case."""
-        import uuid
         data = {
             "id": str(uuid.uuid4()),
             "case_id": case_id,
@@ -369,7 +387,17 @@ class SupabasePrepMaterialsRepository:
             result = self.client.table(Tables.PREP_MATERIALS).insert(data).execute()
             return result.data[0] if result.data else data
         except Exception as e:
-            logger.error(f"Failed to create prep materials: {e}")
+            # Retry without columns that may not exist yet
+            if "column" in str(e) and "does not exist" in str(e):
+                for col in ("opening_plaintiff", "user_notes"):
+                    data.pop(col, None)
+                try:
+                    result = self.client.table(Tables.PREP_MATERIALS).insert(data).execute()
+                    return result.data[0] if result.data else data
+                except Exception as e2:
+                    logger.error(f"Failed to create prep materials (retry): {e2}")
+            else:
+                logger.error(f"Failed to create prep materials: {e}")
             return data
     
     def update(self, case_id: str, **updates) -> Optional[Dict[str, Any]]:
@@ -841,6 +869,43 @@ class SupabaseUserPreferencesRepository:
         except Exception as e:
             logger.error(f"Failed to clear recent: {e}")
             return False
+    
+    # --- Hidden Cases ---
+    
+    def add_hidden(self, case_id: str) -> bool:
+        """Mark a case as hidden/deleted."""
+        try:
+            self.client.table(Tables.HIDDEN_CASES).upsert({
+                "user_id": self.user_id,
+                "case_id": case_id,
+                "hidden_at": datetime.utcnow().isoformat(),
+            }).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to hide case: {e}")
+            return False
+    
+    def remove_hidden(self, case_id: str) -> bool:
+        """Unhide a case."""
+        try:
+            self.client.table(Tables.HIDDEN_CASES).delete().eq(
+                "user_id", self.user_id
+            ).eq("case_id", case_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to unhide case: {e}")
+            return False
+    
+    def get_hidden(self) -> List[str]:
+        """Get all hidden case IDs."""
+        try:
+            result = self.client.table(Tables.HIDDEN_CASES).select("case_id").eq(
+                "user_id", self.user_id
+            ).execute()
+            return [r["case_id"] for r in result.data] if result.data else []
+        except Exception as e:
+            logger.warning(f"Failed to get hidden cases: {e}")
+            return []
 
 
 # =============================================================================
@@ -1184,6 +1249,18 @@ CREATE TABLE IF NOT EXISTS uploaded_cases (
 );
 
 CREATE INDEX IF NOT EXISTS idx_uploaded_cases_user ON uploaded_cases(user_id);
+
+-- Hidden/deleted cases (persists across restarts)
+CREATE TABLE IF NOT EXISTS hidden_cases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL DEFAULT 'default',
+    case_id TEXT NOT NULL,
+    hidden_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, case_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_hidden_cases_user ON hidden_cases(user_id);
+CREATE INDEX IF NOT EXISTS idx_hidden_cases_case ON hidden_cases(case_id);
 
 -- Per-agent prep materials (generated once per case, reused across sessions)
 CREATE TABLE IF NOT EXISTS agent_prep_materials (

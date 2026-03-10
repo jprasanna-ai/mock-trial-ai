@@ -321,7 +321,7 @@ async def score_participant(
         # Persist each ballot with category scores
         for ballot in ballots:
             db_ballot = scoring_repo.add_ballot(
-                scoring_result_id=db_scoring_result.id,
+                scoring_result_id=db_scoring_result["id"] if isinstance(db_scoring_result, dict) else db_scoring_result.id,
                 judge_id=ballot.judge_id,
                 judge_name=ballot.judge_name,
                 total_score=ballot.total_score(),
@@ -332,7 +332,7 @@ async def score_participant(
             # Persist category scores
             for category, cat_score in ballot.scores.items():
                 scoring_repo.add_category_score(
-                    ballot_id=db_ballot.id,
+                    ballot_id=db_ballot["id"] if isinstance(db_ballot, dict) else db_ballot.id,
                     category=category.value,
                     score=cat_score.score,
                     justification=cat_score.justification,
@@ -364,18 +364,27 @@ async def get_session_scores(session_id: str, ):
     try:
         db_results = scoring_repo.get_scoring_results(session_id)
         if db_results:
-            return [
-                StoredScoreResponse(
-                    session_id=r.session_id,
-                    participant_id=r.participant_id,
-                    participant_role=r.participant_role,
-                    final_scores=r.final_scores,
-                    overall_average=r.overall_average,
-                    created_at=r.created_at.isoformat(),
-                    judge_count=len(scoring_repo.get_ballots(r.id))
-                )
-                for r in db_results
-            ]
+            scored = []
+            for r in db_results:
+                rid = r["id"] if isinstance(r, dict) else r.id
+                try:
+                    ballots_list = scoring_repo.get_ballots(rid)
+                    jcount = len(ballots_list) if ballots_list else 0
+                except Exception:
+                    jcount = 0
+                created = r.get("created_at", "") if isinstance(r, dict) else getattr(r, "created_at", "")
+                if hasattr(created, "isoformat"):
+                    created = created.isoformat()
+                scored.append(StoredScoreResponse(
+                    session_id=r.get("session_id", session_id) if isinstance(r, dict) else r.session_id,
+                    participant_id=r.get("participant_id", "") if isinstance(r, dict) else r.participant_id,
+                    participant_role=r.get("participant_role", "") if isinstance(r, dict) else r.participant_role,
+                    final_scores=r.get("final_scores", {}) if isinstance(r, dict) else r.final_scores,
+                    overall_average=r.get("overall_average", 0) if isinstance(r, dict) else r.overall_average,
+                    created_at=str(created),
+                    judge_count=jcount,
+                ))
+            return scored
     except Exception as e:
         logger.warning(f"Failed to query scoring results from database: {e}")
     
@@ -539,10 +548,10 @@ async def get_leaderboard(session_id: str, ):
             leaderboard = [
                 {
                     "rank": i + 1,
-                    "participant_id": r.participant_id,
-                    "participant_role": r.participant_role,
-                    "overall_average": round(r.overall_average, 2),
-                    "total_score": sum(r.final_scores.values()) if r.final_scores else 0,
+                    "participant_id": r.get("participant_id") if isinstance(r, dict) else r.participant_id,
+                    "participant_role": r.get("participant_role") if isinstance(r, dict) else r.participant_role,
+                    "overall_average": round((r.get("overall_average", 0) if isinstance(r, dict) else r.overall_average) or 0, 2),
+                    "total_score": sum((r.get("final_scores") if isinstance(r, dict) else r.final_scores or {}).values()) if (r.get("final_scores") if isinstance(r, dict) else getattr(r, "final_scores", None)) else 0,
                 }
                 for i, r in enumerate(db_results)
             ]
@@ -593,6 +602,39 @@ async def get_leaderboard(session_id: str, ):
 _live_scores: Dict[str, Dict[str, Any]] = {}
 
 
+def _persist_live_scores(session_id: str, data: Dict[str, Any]):
+    """Write live scores to DB so they survive server restarts."""
+    try:
+        from ..db.supabase_client import get_supabase_client
+        client = get_supabase_client()
+        client.table("live_scores").upsert({
+            "session_id": session_id,
+            "scores": data.get("scores", {}),
+            "phase": data.get("phase", ""),
+            "transcript_length": data.get("transcript_length", 0),
+        }, on_conflict="session_id").execute()
+    except Exception as e:
+        logger.debug(f"Could not persist live scores to DB: {e}")
+
+
+def _load_live_scores_from_db(session_id: str) -> Optional[Dict[str, Any]]:
+    """Load live scores from DB if not in memory cache."""
+    try:
+        from ..db.supabase_client import get_supabase_client
+        client = get_supabase_client()
+        result = client.table("live_scores").select("*").eq("session_id", session_id).execute()
+        if result.data:
+            row = result.data[0]
+            return {
+                "scores": row.get("scores", {}),
+                "phase": row.get("phase", ""),
+                "transcript_length": row.get("transcript_length", 0),
+            }
+    except Exception:
+        pass
+    return None
+
+
 @router.post("/{session_id}/live-score")
 async def live_score_all(session_id: str):
     """
@@ -607,12 +649,18 @@ async def live_score_all(session_id: str):
     if not session.judges:
         raise HTTPException(status_code=400, detail="No judges available")
 
+    # Invalidate cached verdict so it gets recalculated with fresh scores
+    _verdict_cache.pop(session_id, None)
+
     judge = session.judges[0]
     transcript = session.trial_state.transcript
     trial_memory = session.trial_memory
 
     if not transcript:
+        logger.info(f"live_score_all: no transcript for {session_id}")
         return {"session_id": session_id, "scores": {}, "message": "No transcript yet"}
+
+    logger.info(f"live_score_all: {len(transcript)} transcript entries for {session_id}")
 
     results: Dict[str, Any] = {}
 
@@ -636,6 +684,7 @@ async def live_score_all(session_id: str):
         role = Role.ATTORNEY_PLAINTIFF if side == "plaintiff" else Role.ATTORNEY_DEFENSE
         all_entries = [e for e in transcript if e.get("role") == f"attorney_{side}"]
         if not all_entries:
+            logger.info(f"live_score_all: no entries for attorney_{side}")
             continue
 
         # Group transcript entries by sub-role
@@ -649,6 +698,8 @@ async def live_score_all(session_id: str):
             else:
                 sr = "direct_cross"
             subrole_entries.setdefault(sr, []).append(e)
+
+        logger.info(f"live_score_all: attorney_{side} subroles={list(subrole_entries.keys())} counts={{k: len(v) for k, v in subrole_entries.items()}}")
 
         for sr, entries in subrole_entries.items():
             score_key = f"attorney_{side}_{sr}"
@@ -695,8 +746,9 @@ async def live_score_all(session_id: str):
                     "categories": cat_scores,
                     "comments": ballot.overall_comments,
                 }
+                logger.info(f"live_score_all: scored {score_key} avg={round(ballot.average_score(), 1)}")
             except Exception as e:
-                logger.warning(f"Live scoring failed for {score_key}: {e}")
+                logger.warning(f"Live scoring failed for {score_key}: {e}", exc_info=True)
 
     # Score each witness that has testified
     for wid, agent in session.witnesses.items():
@@ -720,7 +772,16 @@ async def live_score_all(session_id: str):
                 for cat, cs in ballot.scores.items()
             }
             called_by = getattr(agent.persona, "called_by", None) or "unknown"
-            w_side = "Prosecution" if called_by in ("plaintiff", "prosecution") else "Defense"
+            # Use trial-time assignment if available (handles "either" witnesses)
+            assigned = getattr(session, "witness_assignments", {}).get(wid)
+            if assigned:
+                w_side = "Prosecution" if assigned in ("plaintiff", "prosecution") else "Defense"
+            elif wid in getattr(session.trial_state, "prosecution_witnesses", []):
+                w_side = "Prosecution"
+            elif wid in getattr(session.trial_state, "defense_witnesses", []):
+                w_side = "Defense"
+            else:
+                w_side = "Prosecution" if called_by in ("plaintiff", "prosecution") else "Defense"
             witness_role_label = getattr(agent.persona, "role_description", None) or "Witness"
             results[f"witness_{wid}"] = {
                 "role": "witness",
@@ -735,25 +796,40 @@ async def live_score_all(session_id: str):
         except Exception as e:
             logger.warning(f"Live scoring failed for witness {wid}: {e}")
 
-    _live_scores[session_id] = {
-        "scores": results,
+    # Merge new results with any existing scores to preserve entries
+    # that couldn't be regenerated (e.g., witnesses after server restart)
+    existing = _live_scores.get(session_id, {})
+    existing_scores = existing.get("scores", {})
+    merged_scores = {**existing_scores, **results}
+    logger.info(f"live_score_all: new_keys={list(results.keys())} existing_keys={list(existing_scores.keys())} merged_keys={list(merged_scores.keys())}")
+
+    live_data = {
+        "scores": merged_scores,
         "phase": session.trial_state.phase.value,
         "transcript_length": len(transcript),
     }
+    _live_scores[session_id] = live_data
+
+    # Persist to DB so scores survive restarts
+    _persist_live_scores(session_id, live_data)
 
     return {
         "session_id": session_id,
         "phase": session.trial_state.phase.value,
-        "scores": results,
+        "scores": merged_scores,
     }
 
 
 @router.get("/{session_id}/live-scores")
 async def get_live_scores(session_id: str):
     """Get the most recent live scores for a session."""
-    get_session(session_id)
     cached = _live_scores.get(session_id)
     if not cached:
+        # Try loading from DB
+        db_data = _load_live_scores_from_db(session_id)
+        if db_data and db_data.get("scores"):
+            _live_scores[session_id] = db_data
+            return {"session_id": session_id, **db_data}
         return {"session_id": session_id, "scores": {}, "message": "No live scores yet"}
     return {"session_id": session_id, **cached}
 
@@ -786,29 +862,226 @@ async def get_full_scoring_report(session_id: str):
     """
     Comprehensive scoring report combining live scores, full scoring ballots,
     and category descriptions. Used by the Score Detail page.
+
+    Works for both active in-memory sessions AND historical trials that only
+    exist in transcript storage / live_scores DB.
     """
-    session = get_session(session_id)
+    session = None
+    try:
+        session = get_session(session_id)
+    except HTTPException:
+        pass
 
     live = _live_scores.get(session_id, {})
+    if not live:
+        db_live = _load_live_scores_from_db(session_id)
+        if db_live and db_live.get("scores"):
+            _live_scores[session_id] = db_live
+            live = db_live
     live_scores = live.get("scores", {})
 
-    stored = _scoring_results.get(session_id)
-    ballots_data = []
-    if stored:
-        ballots_data = stored.ballots
+    # Auto-generate scores if none exist but we have a live session with data
+    if not live_scores and session and session.trial_state.transcript and session.judges:
+        try:
+            result = await live_score_all(session_id)
+            if isinstance(result, dict) and result.get("scores"):
+                live_scores = result["scores"]
+        except Exception as e:
+            logger.warning(f"Auto-scoring in full-report failed: {e}")
 
-    case_name = getattr(session, "case_name", None) or session_id
-    case_id = getattr(session, "case_id", None) or "unknown"
+    # Collect ballots from all scoring results for this session
+    ballots_data = []
+    for key, sr in _scoring_results.items():
+        if key.startswith(f"{session_id}_"):
+            ballots_data.extend(sr.ballots)
+
+    # Derive case metadata — prefer live session, fall back to transcript storage
+    case_name = None
+    case_id = "unknown"
+    phase = "completed"
+
+    if session:
+        case_name = getattr(session, "case_name", None)
+        case_id = str(getattr(session, "case_id", None) or "unknown")
+        phase = session.trial_state.phase.value
+        if session.case_data:
+            case_name = case_name or session.case_data.get("case_name")
+
+    if not case_name or case_name == session_id:
+        try:
+            from ..db.storage import get_transcript_storage
+            storage = get_transcript_storage()
+            transcripts = storage.list_transcripts()
+            for t in transcripts:
+                if t.get("session_id") == session_id:
+                    case_name = t.get("case_name") or case_name
+                    case_id = str(t.get("case_id") or case_id)
+                    phases = t.get("phases_completed", [])
+                    if phases:
+                        phase = phases[-1]
+                    break
+        except Exception as e:
+            logger.debug(f"Could not look up transcript metadata for {session_id}: {e}")
+
+    if not case_name:
+        case_name = session_id
+
+    if not live_scores and not ballots_data:
+        raise HTTPException(status_code=404, detail="No scoring data found for this session")
 
     return {
         "session_id": session_id,
         "case_name": case_name,
-        "case_id": str(case_id),
-        "phase": session.trial_state.phase.value,
+        "case_id": case_id,
+        "phase": phase,
         "live_scores": live_scores,
         "stored_ballots": ballots_data,
         "category_descriptions": CATEGORY_DESCRIPTIONS,
     }
+
+
+# =============================================================================
+# VERDICT / WINNER ANNOUNCEMENT
+# =============================================================================
+
+_verdict_cache: Dict[str, Dict[str, Any]] = {}
+
+
+@router.get("/{session_id}/verdict")
+async def get_verdict(session_id: str):
+    """Compute the winner based on live scores and generate a judge verdict.
+
+    Works for both active sessions and historical completed trials.
+    """
+    session = None
+    try:
+        session = get_session(session_id)
+    except HTTPException:
+        pass
+
+    # Gate: for live sessions, trial must be finished
+    if session:
+        current_phase = session.trial_state.phase.value.lower()
+        if current_phase not in ("scoring", "completed", "verdict", "prep"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Trial is still in '{session.trial_state.phase.value}' phase. "
+                       f"Complete the trial before requesting a verdict.",
+            )
+
+    if session_id in _verdict_cache:
+        return _verdict_cache[session_id]
+
+    cached = _live_scores.get(session_id)
+    if not cached or not cached.get("scores"):
+        cached = _load_live_scores_from_db(session_id)
+        if cached and cached.get("scores"):
+            _live_scores[session_id] = cached
+    if not cached or not cached.get("scores"):
+        raise HTTPException(status_code=400, detail="No scores available yet. Complete the trial first.")
+
+    scores = cached["scores"]
+    pros_scores: List[float] = []
+    def_scores: List[float] = []
+    pros_cats: Dict[str, List[float]] = {}
+    def_cats: Dict[str, List[float]] = {}
+
+    for score_key, entry in scores.items():
+        # Derive side from the score key first, then fall back to entry's side field
+        if score_key.startswith("attorney_plaintiff") or score_key.startswith("witness_plaintiff"):
+            side = "Prosecution"
+        elif score_key.startswith("attorney_defense") or score_key.startswith("witness_defense"):
+            side = "Defense"
+        else:
+            side = entry.get("side", "")
+
+        avg = entry.get("average", 0)
+        if not avg:
+            continue
+        cats = entry.get("categories", {})
+
+        if side == "Prosecution":
+            pros_scores.append(avg)
+            for cat, val in cats.items():
+                score = val.get("score", val) if isinstance(val, dict) else val
+                try:
+                    pros_cats.setdefault(cat, []).append(float(score))
+                except (TypeError, ValueError):
+                    pass
+        elif side == "Defense":
+            def_scores.append(avg)
+            for cat, val in cats.items():
+                score = val.get("score", val) if isinstance(val, dict) else val
+                try:
+                    def_cats.setdefault(cat, []).append(float(score))
+                except (TypeError, ValueError):
+                    pass
+
+    if not pros_scores and not def_scores:
+        raise HTTPException(status_code=400, detail="No valid scores found to compute verdict.")
+
+    prosecution_avg = sum(pros_scores) / len(pros_scores) if pros_scores else 0
+    defense_avg = sum(def_scores) / len(def_scores) if def_scores else 0
+    pros_cat_avg = {c: sum(v) / len(v) for c, v in pros_cats.items() if v}
+    def_cat_avg = {c: sum(v) / len(v) for c, v in def_cats.items() if v}
+
+    logger.info(
+        f"Verdict calc: pros members={len(pros_scores)} avg={prosecution_avg:.1f}, "
+        f"def members={len(def_scores)} avg={defense_avg:.1f}"
+    )
+
+    winner = "Prosecution" if prosecution_avg >= defense_avg else "Defense"
+
+    verdict_text = ""
+    if session and session.judges:
+        judge = session.judges[0]
+        case_name = (session.case_data or {}).get("case_name", "")
+        try:
+            verdict_text = judge.generate_verdict(
+                prosecution_avg=prosecution_avg,
+                defense_avg=defense_avg,
+                prosecution_details=pros_cat_avg,
+                defense_details=def_cat_avg,
+                case_name=case_name,
+            )
+        except Exception as e:
+            logger.error(f"Verdict generation failed: {e}")
+
+    if not verdict_text:
+        verdict_text = (
+            f"After careful deliberation, this court finds the {winner} to be the "
+            f"prevailing team, with an average score of "
+            f"{max(prosecution_avg, defense_avg):.1f} to "
+            f"{min(prosecution_avg, defense_avg):.1f}. "
+            f"Both teams demonstrated commendable advocacy. This trial is now concluded."
+        )
+
+    result = {
+        "session_id": session_id,
+        "winner": winner,
+        "prosecution_avg": round(prosecution_avg, 1),
+        "defense_avg": round(defense_avg, 1),
+        "margin": round(abs(prosecution_avg - defense_avg), 1),
+        "verdict_text": verdict_text,
+        "prosecution_categories": {k: round(v, 1) for k, v in pros_cat_avg.items()},
+        "defense_categories": {k: round(v, 1) for k, v in def_cat_avg.items()},
+    }
+    _verdict_cache[session_id] = result
+
+    # Persist to DB so verdict survives restarts
+    try:
+        from ..db.supabase_client import get_supabase_client
+        client = get_supabase_client()
+        client.table("live_scores").upsert({
+            "session_id": session_id,
+            "scores": cached.get("scores", {}),
+            "phase": cached.get("phase", "scoring"),
+            "transcript_length": cached.get("transcript_length", 0),
+        }, on_conflict="session_id").execute()
+    except Exception:
+        pass
+
+    return result
 
 
 # =============================================================================

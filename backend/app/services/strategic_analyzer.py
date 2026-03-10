@@ -17,6 +17,7 @@ from ..memory.trial_memory import (
     LivePrepUpdate,
 )
 from .llm_service import call_llm_async, PersonaContext
+from ..config import MODEL_MID
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ Return ONLY valid JSON."""
                 persona=_ANALYZER_PERSONA,
                 max_tokens=800,
                 temperature=0.3,
+                model=MODEL_MID,
             )
 
             data = json.loads(result)
@@ -227,6 +229,7 @@ Return ONLY valid JSON."""
             persona=_ANALYZER_PERSONA,
             max_tokens=600,
             temperature=0.3,
+            model=MODEL_MID,
         )
         data = json.loads(result)
         _apply_analysis_to_memory(trial_memory, opposing, "", "", "opening", data)

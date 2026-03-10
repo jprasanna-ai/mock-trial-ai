@@ -50,14 +50,14 @@ class Config:
     # Supabase Database (required)
     database_url: str  # Supabase PostgreSQL connection string
     
+    # Optional settings
+    log_level: str = "INFO"
+    debug: bool = False
+    
     # Supabase API (optional - only needed for Supabase client features)
     supabase_url: Optional[str] = None
     supabase_anon_key: Optional[str] = None
     supabase_service_role_key: Optional[str] = None
-    
-    # Optional settings
-    log_level: str
-    debug: bool
     
     @classmethod
     def from_env(cls) -> "Config":
@@ -175,3 +175,18 @@ def get_supabase_service_role_key() -> str:
 def get_database_url() -> str:
     """Get Supabase PostgreSQL connection URL from configuration."""
     return get_config().database_url
+
+
+# =============================================================================
+# MODEL TIER CONFIGURATION
+# =============================================================================
+
+import os as _os
+
+MODEL_FULL = _os.environ.get("LLM_MODEL_FULL", "gpt-4.1")
+MODEL_MID = _os.environ.get("LLM_MODEL_MID", "gpt-4.1-mini")
+MODEL_NANO = _os.environ.get("LLM_MODEL_NANO", "gpt-4.1-nano")
+
+ENABLE_STRATEGIC_ANALYSIS = (
+    _os.environ.get("ENABLE_STRATEGIC_ANALYSIS", "false").lower() == "true"
+)

@@ -1,8 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiFetch, API_BASE } from "@/lib/api";
 
 interface TestResult {
   name: string;
@@ -45,7 +44,7 @@ export default function TestSuitePage() {
       const body = selectedCategories.length > 0
         ? JSON.stringify(selectedCategories)
         : null;
-      const res = await fetch(`${API_BASE}/api/tests/run`, {
+      const res = await apiFetch(`${API_BASE}/api/tests/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body,

@@ -1,10 +1,161 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronDownIcon } from "@/components/ui/icons";
+import { apiFetch, API_BASE } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+function EmailDialog({
+  open,
+  onClose,
+  sessionId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  sessionId: string;
+}) {
+  const [emails, setEmails] = useState("");
+  const [includeTranscript, setIncludeTranscript] = useState(true);
+  const [includeScores, setIncludeScores] = useState(true);
+  const [senderName, setSenderName] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const handleSend = useCallback(async () => {
+    const recipients = emails
+      .split(/[,;\n]+/)
+      .map((e) => e.trim())
+      .filter((e) => e.includes("@"));
+    if (recipients.length === 0) {
+      setResult({ ok: false, msg: "Enter at least one valid email address" });
+      return;
+    }
+    setSending(true);
+    setResult(null);
+    try {
+      const resp = await apiFetch(`${API_BASE}/api/trial/${sessionId}/email-report`, {
+        method: "POST",
+        body: JSON.stringify({
+          recipients,
+          include_transcript: includeTranscript,
+          include_scores: includeScores,
+          sender_name: senderName || undefined,
+        }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      setResult({ ok: true, msg: data.message || "Sent!" });
+      setTimeout(() => onClose(), 2000);
+    } catch (e: any) {
+      setResult({ ok: false, msg: e.message || "Failed to send" });
+    } finally {
+      setSending(false);
+    }
+  }, [emails, includeTranscript, includeScores, senderName, sessionId, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            Email Report
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-white">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Emails</label>
+            <textarea
+              value={emails}
+              onChange={(e) => setEmails(e.target.value)}
+              placeholder="Enter email addresses (comma or newline separated)"
+              rows={3}
+              className="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Your Name (optional)</label>
+            <input
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              placeholder="Shown as sender name"
+              className="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeTranscript}
+                onChange={(e) => setIncludeTranscript(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-300">Include Transcript</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeScores}
+                onChange={(e) => setIncludeScores(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-300">Include Scores</span>
+            </label>
+          </div>
+
+          {result && (
+            <div className={`p-3 rounded-lg text-sm ${result.ok ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" : "bg-red-500/10 border border-red-500/30 text-red-400"}`}>
+              {result.msg}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-slate-700 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={sending || !emails.trim()}
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+          >
+            {sending ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                Sending...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+                Send Report
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface CategoryDetail {
   score: number;
@@ -88,24 +239,66 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
+interface Verdict {
+  winner: string;
+  prosecution_avg: number;
+  defense_avg: number;
+  margin: number;
+  verdict_text: string;
+  prosecution_categories: Record<string, number>;
+  defense_categories: Record<string, number>;
+}
+
 export default function ScoreDetailPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params.sessionId as string;
   const [report, setReport] = useState<FullReport | null>(null);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
-    fetch(`${API_BASE}/api/scoring/${sessionId}/full-report`)
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then((data) => setReport(data))
+    Promise.all([
+      apiFetch(`${API_BASE}/api/scoring/${sessionId}/full-report`)
+        .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+      apiFetch(`${API_BASE}/api/scoring/${sessionId}/verdict`)
+        .then((r) => r.ok ? r.json() : null)
+        .catch(() => null),
+    ])
+      .then(([reportData, verdictData]) => {
+        setReport(reportData);
+        if (verdictData) setVerdict(verdictData);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [sessionId]);
+
+  const handleRefreshScores = useCallback(async () => {
+    if (!sessionId || refreshing) return;
+    setRefreshing(true);
+    try {
+      await apiFetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST" });
+      const [reportData, verdictData] = await Promise.all([
+        apiFetch(`${API_BASE}/api/scoring/${sessionId}/full-report`)
+          .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        apiFetch(`${API_BASE}/api/scoring/${sessionId}/verdict`)
+          .then((r) => r.ok ? r.json() : null)
+          .catch(() => null),
+      ]);
+      setReport(reportData);
+      if (verdictData) setVerdict(verdictData);
+    } catch (e: any) {
+      console.error("Refresh failed:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [sessionId, refreshing]);
 
   if (loading) {
     return (
@@ -127,8 +320,16 @@ export default function ScoreDetailPage() {
   }
 
   const allMembers = Object.entries(report.live_scores);
-  const prosMembers = allMembers.filter(([, v]) => v.side === "Prosecution");
-  const defMembers = allMembers.filter(([, v]) => v.side === "Defense");
+  const prosMembers = allMembers.filter(([k, v]) => {
+    if (k.startsWith("attorney_")) return k.startsWith("attorney_plaintiff");
+    return v.side === "Prosecution";
+  });
+  const prosKeys = new Set(prosMembers.map(([k]) => k));
+  const defMembers = allMembers.filter(([k, v]) => {
+    if (prosKeys.has(k)) return false;
+    if (k.startsWith("attorney_")) return k.startsWith("attorney_defense");
+    return true;
+  });
 
   const discoveredCategories = Array.from(
     new Set(
@@ -141,16 +342,41 @@ export default function ScoreDetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/60 backdrop-blur-sm sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-4 py-0 flex items-center justify-between h-14">
+          <button onClick={() => { if (window.history.length > 1) { router.back(); } else { router.push(`/courtroom/${sessionId}`); } }} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
             Back to Courtroom
           </button>
-          <h1 className="text-white font-semibold">Score Details</h1>
-          <div className="w-32" />
+          <h1 className="text-white font-semibold flex items-center gap-2">
+            <span className="text-amber-400 font-bold text-sm">MockPrep<span className="text-amber-300">AI</span></span>
+            <span className="text-slate-600">|</span>
+            Score Details
+          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshScores}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-slate-600/50 hover:text-white disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
+              title="Regenerate all scores from transcript"
+            >
+              <svg className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+              </svg>
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
+            <button
+              onClick={() => setEmailDialogOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 hover:text-blue-300 rounded-lg text-sm font-medium transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              Email Report
+            </button>
+          </div>
         </div>
       </header>
 
@@ -159,7 +385,43 @@ export default function ScoreDetailPage() {
         <div className="text-center mb-10">
           <h2 className="text-2xl font-bold text-white mb-1">{report.case_name}</h2>
           <p className="text-slate-400 text-sm">Phase: {report.phase}</p>
+          {report.phase?.toLowerCase() !== "scoring" && report.phase?.toLowerCase() !== "completed" && (
+            <p className="text-yellow-400 text-xs mt-2">Trial is still in progress. Scores shown are partial. Verdict will be available after the trial is complete.</p>
+          )}
         </div>
+
+        {/* Verdict Banner — only show when trial is done */}
+        {verdict && (report.phase?.toLowerCase() === "scoring" || report.phase?.toLowerCase() === "completed") && (
+          <div className="mb-10 bg-gradient-to-r from-amber-900/30 via-amber-800/20 to-amber-900/30 border border-amber-500/30 rounded-2xl overflow-hidden">
+            <div className="px-6 py-5 text-center border-b border-amber-500/20">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <svg className="w-7 h-7 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                </svg>
+                <h3 className="text-xl font-bold text-amber-300 uppercase tracking-wider">Verdict</h3>
+              </div>
+              <div className="flex items-center justify-center gap-8 mb-4">
+                <div className={`text-center ${verdict.winner === "Prosecution" ? "ring-2 ring-amber-400 rounded-xl px-4 py-2" : "px-4 py-2"}`}>
+                  <p className="text-xs text-blue-400 uppercase tracking-wider font-semibold">Prosecution</p>
+                  <p className="text-3xl font-bold text-white">{verdict.prosecution_avg}</p>
+                </div>
+                <div className="text-slate-500 text-sm font-medium">vs</div>
+                <div className={`text-center ${verdict.winner === "Defense" ? "ring-2 ring-amber-400 rounded-xl px-4 py-2" : "px-4 py-2"}`}>
+                  <p className="text-xs text-red-400 uppercase tracking-wider font-semibold">Defense</p>
+                  <p className="text-3xl font-bold text-white">{verdict.defense_avg}</p>
+                </div>
+              </div>
+              <p className="text-amber-300 font-semibold text-lg">
+                {verdict.winner} wins by {verdict.margin} points
+              </p>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-slate-300 leading-relaxed text-sm italic">
+                &ldquo;{verdict.verdict_text}&rdquo;
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── SECTION 1: Category-by-Category Breakdown ── */}
         <div className="mb-12">
@@ -175,14 +437,19 @@ export default function ScoreDetailPage() {
               const isExpanded = expandedCategory === cat;
               const desc = report.category_descriptions?.[cat] || "";
               const memberScores = allMembers
-                .map(([key, m]) => ({
-                  key,
-                  name: m.name,
-                  subRole: m.attorney_sub_role || m.witness_role || "",
-                  side: m.side,
-                  score: getCatScore(m.categories?.[cat]),
-                  justification: getCatJustification(m.categories?.[cat]),
-                }))
+                .map(([key, m]) => {
+                  const derivedSide = key.startsWith("attorney_plaintiff") ? "Prosecution"
+                    : key.startsWith("attorney_defense") ? "Defense"
+                    : m.side;
+                  return {
+                    key,
+                    name: m.name,
+                    subRole: m.attorney_sub_role || m.witness_role || "",
+                    side: derivedSide,
+                    score: getCatScore(m.categories?.[cat]),
+                    justification: getCatJustification(m.categories?.[cat]),
+                  };
+                })
                 .filter((ms) => ms.score > 0);
 
               const avgScore = memberScores.length > 0
@@ -300,6 +567,8 @@ export default function ScoreDetailPage() {
           </div>
         )}
       </div>
+
+      <EmailDialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)} sessionId={sessionId} />
     </div>
   );
 }
@@ -307,8 +576,9 @@ export default function ScoreDetailPage() {
 
 function MemberCard({ mKey, data, expanded, onToggle }: { mKey: string; data: LiveScore; expanded: boolean; onToggle: () => void }) {
   const label = data.attorney_sub_role || data.witness_role || "";
-  const sideColor = data.side === "Prosecution" ? "border-blue-500/30" : "border-red-500/30";
-  const sideBg = data.side === "Prosecution" ? "bg-blue-500/15" : "bg-red-500/15";
+  const isPros = mKey.startsWith("attorney_plaintiff") || (!mKey.startsWith("attorney_defense") && data.side === "Prosecution");
+  const sideColor = isPros ? "border-blue-500/30" : "border-red-500/30";
+  const sideBg = isPros ? "bg-blue-500/15" : "bg-red-500/15";
 
   const catEntries = data.categories
     ? Object.entries(data.categories).filter(([, v]) => getCatScore(v) > 0)

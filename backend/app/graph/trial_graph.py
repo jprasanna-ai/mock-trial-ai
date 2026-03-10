@@ -1068,7 +1068,11 @@ def complete_examination(
 def dismiss_witness(state: TrialState) -> TrialState:
     """Mark the current witness as fully examined and remove from the stand."""
     if state.current_witness_id:
-        state.witnesses_examined.append(state.current_witness_id)
+        wid = state.current_witness_id
+        if wid not in state.witnesses_examined:
+            state.witnesses_examined.append(wid)
+        if wid in state.witnesses_to_examine:
+            state.witnesses_to_examine.remove(wid)
         state.current_witness_id = None
         state.examining_side = None
     return state

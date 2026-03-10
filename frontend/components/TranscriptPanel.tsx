@@ -119,7 +119,7 @@ const phaseLabels: Record<TrialPhase, string> = {
 // COMPONENT
 // =============================================================================
 
-export function TranscriptPanel({
+export const TranscriptPanel = React.memo(function TranscriptPanel({
   entries,
   currentPhase,
   autoScroll = true,
@@ -375,6 +375,6 @@ export function TranscriptPanel({
       </div>
     </div>
   );
-}
+});
 
 export default TranscriptPanel;

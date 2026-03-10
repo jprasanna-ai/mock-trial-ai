@@ -41,6 +41,7 @@ from ..graph.trial_graph import (
     TESTIMONY_STATES,
     validate_speaker,
 )
+from ..config import MODEL_MID, MODEL_NANO
 
 
 # =============================================================================
@@ -248,23 +249,27 @@ class WitnessAgent:
     # CORE GENERATION METHOD
     # =========================================================================
     
+    _MAX_HISTORY = 5
+
     def _generate(
         self,
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 300
+        max_tokens: int = 300,
+        model: str = None
     ) -> str:
         """Generate text response via backend LLM service with per-agent overrides."""
-        if self.persona.custom_system_prompt:
+        resolved_model = self.persona.llm_model or model or self.MODEL
+        if resolved_model != MODEL_NANO and self.persona.custom_system_prompt:
             system_prompt = self.persona.custom_system_prompt + "\n\n" + system_prompt
         return call_llm(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            persona=self._persona_context,
+            persona=self._persona_context if resolved_model != MODEL_NANO else None,
             temperature=self.persona.llm_temperature if self.persona.llm_temperature is not None else temperature,
             max_tokens=self.persona.llm_max_tokens if self.persona.llm_max_tokens is not None else max_tokens,
-            model=self.persona.llm_model or self.MODEL,
+            model=resolved_model,
         )
     
     def _build_system_prompt(self, context: str) -> str:

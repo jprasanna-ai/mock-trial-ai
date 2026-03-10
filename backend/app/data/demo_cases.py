@@ -336,6 +336,7 @@ CASE_SECTIONS = [
 # In-memory fallback storage (used when Supabase is not configured)
 _uploaded_cases: Dict[str, Dict[str, Any]] = {}
 _favorite_cases: set = set()
+_hidden_cases: set = set()
 _recently_accessed: List[Dict[str, Any]] = []
 MAX_RECENT_CASES = 10
 
@@ -438,6 +439,44 @@ def delete_uploaded_case(case_id: str) -> bool:
                 pass
     
     return deleted
+
+
+def _load_hidden_cases() -> None:
+    """Load hidden cases from database into the in-memory set."""
+    prefs_repo, _, db_available = _get_repos()
+    if db_available and prefs_repo:
+        try:
+            hidden = prefs_repo.get_hidden()
+            _hidden_cases.update(hidden)
+        except Exception as e:
+            logger.warning(f"Failed to load hidden cases from database: {e}")
+
+
+def hide_case(case_id: str) -> None:
+    """Mark a case as hidden so it won't appear in listings. Persisted to database."""
+    _hidden_cases.add(case_id)
+    prefs_repo, _, db_available = _get_repos()
+    if db_available and prefs_repo:
+        try:
+            prefs_repo.add_hidden(case_id)
+        except Exception as e:
+            logger.warning(f"Failed to persist hidden case to database: {e}")
+
+
+def unhide_case(case_id: str) -> None:
+    """Remove a case from the hidden list. Persisted to database."""
+    _hidden_cases.discard(case_id)
+    prefs_repo, _, db_available = _get_repos()
+    if db_available and prefs_repo:
+        try:
+            prefs_repo.remove_hidden(case_id)
+        except Exception as e:
+            logger.warning(f"Failed to remove hidden case from database: {e}")
+
+
+def is_case_hidden(case_id: str) -> bool:
+    """Check if a case is hidden."""
+    return case_id in _hidden_cases
 
 
 def get_all_uploaded_cases() -> List[Dict[str, Any]]:
@@ -597,7 +636,10 @@ def get_all_demo_cases() -> List[Dict[str, Any]]:
     Return all available case sources for listing.
     Merges MYLaw source metadata with uploaded case data.
     """
-    # First, load uploaded cases from database into memory
+    # Load hidden cases from database on first call
+    _load_hidden_cases()
+    
+    # Load uploaded cases from database into memory
     _, cases_repo, db_available = _get_repos()
     if db_available and cases_repo:
         try:
@@ -614,6 +656,8 @@ def get_all_demo_cases() -> List[Dict[str, Any]]:
     all_sources = AMTA_CASE_SOURCES + MYLAW_CASE_SOURCES
     for case in all_sources:
         case_id = case["id"]
+        if case_id in _hidden_cases:
+            continue
         uploaded_data = _uploaded_cases.get(case_id)
         has_uploads = uploaded_data is not None and len(uploaded_data.get("sections", {})) > 0
         sections_count = len(uploaded_data.get("sections", {})) if uploaded_data else 0
@@ -643,7 +687,7 @@ def get_all_demo_cases() -> List[Dict[str, Any]]:
     amta_ids = {c["id"] for c in AMTA_CASE_SOURCES}
     mylaw_ids.update(amta_ids)
     for case_id, data in _uploaded_cases.items():
-        if case_id not in mylaw_ids:
+        if case_id not in mylaw_ids and case_id not in _hidden_cases:
             cases.append({
                 "id": case_id,
                 "title": data.get("title", "Uploaded Case"),
@@ -672,11 +716,22 @@ def get_demo_case_by_id(case_id: str) -> Optional[Dict[str, Any]]:
     Get a specific case by ID.
     Returns case metadata for source cases, or full content for uploaded cases.
     """
-    # Check uploaded cases first
+    # Check in-memory cache first
     if case_id in _uploaded_cases:
         return _uploaded_cases[case_id]
-    
-    # Check all sources (AMTA + MYLaw)
+
+    # If not in memory, try loading from DB
+    _, cases_repo, db_available = _get_repos()
+    if db_available and cases_repo:
+        try:
+            db_case = cases_repo.get(case_id)
+            if db_case:
+                _uploaded_cases[case_id] = db_case
+                return db_case
+        except Exception as e:
+            logger.warning(f"Failed to load case {case_id} from database: {e}")
+
+    # Check all sources (AMTA + MYLaw) — return stub metadata if no upload exists
     for case in AMTA_CASE_SOURCES + MYLAW_CASE_SOURCES:
         if case["id"] == case_id:
             return {

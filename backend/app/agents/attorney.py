@@ -49,6 +49,7 @@ from ..graph.trial_graph import (
     validate_speaker,
     can_object,
 )
+from ..config import MODEL_FULL, MODEL_MID, MODEL_NANO
 
 
 # =============================================================================
@@ -175,12 +176,15 @@ class AttorneyAgent:
     # CORE GENERATION METHOD
     # =========================================================================
     
+    _MAX_HISTORY = 5
+
     def _generate(
         self,
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 500
+        max_tokens: int = 500,
+        model: str = None
     ) -> str:
         """
         Generate text response via backend LLM service.
@@ -188,16 +192,18 @@ class AttorneyAgent:
         Uses per-agent model/temperature/max_tokens overrides when set,
         otherwise falls back to the default or global overrides.
         """
-        if self.persona.custom_system_prompt:
+        resolved_model = self.persona.llm_model or model or self.MODEL
+        if resolved_model != MODEL_NANO and self.persona.custom_system_prompt:
             system_prompt = self.persona.custom_system_prompt + "\n\n" + system_prompt
+        history = self._conversation_history[-self._MAX_HISTORY:]
         return call_llm(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            persona=self._persona_context,
-            conversation_history=self._conversation_history,
+            persona=self._persona_context if resolved_model != MODEL_NANO else None,
+            conversation_history=history,
             temperature=self.persona.llm_temperature if self.persona.llm_temperature is not None else temperature,
             max_tokens=self.persona.llm_max_tokens if self.persona.llm_max_tokens is not None else max_tokens,
-            model=self.persona.llm_model or self.MODEL,
+            model=resolved_model,
         )
     
     def _build_system_prompt(self, context: str) -> str:
@@ -470,7 +476,7 @@ CURRENT CONTEXT:
         if facts:
             fact_lines = []
             for f in facts[:15]:
-                text = f.get("text", f) if isinstance(f, dict) else str(f)
+                text = (f.get("content") or f.get("text") or str(f)) if isinstance(f, dict) else str(f)
                 fact_type = f.get("fact_type", "") if isinstance(f, dict) else ""
                 prefix = f"[{fact_type}] " if fact_type else ""
                 fact_lines.append(f"  - {prefix}{text}")
@@ -478,28 +484,27 @@ CURRENT CONTEXT:
         
         witnesses = case_data.get("witnesses", [])
         if witnesses:
-            my_side = self.persona.side
             pros_witnesses = []
             def_witnesses = []
+            either_witnesses = []
             for w in witnesses:
                 name = w.get("name", "Unknown")
-                role_desc = w.get("role", w.get("description", ""))
-                side = w.get("side", "")
+                role_desc = w.get("role_description", w.get("role", w.get("description", "")))
+                cb = (w.get("called_by") or w.get("side") or "").lower()
                 entry = f"  - {name}" + (f": {role_desc}" if role_desc else "")
-                if side == "prosecution" or side == "plaintiff":
+                if cb in ("prosecution", "plaintiff"):
                     pros_witnesses.append(entry)
-                elif side == "defense":
+                elif cb == "defense":
                     def_witnesses.append(entry)
                 else:
-                    if my_side == "plaintiff":
-                        pros_witnesses.append(entry)
-                    else:
-                        def_witnesses.append(entry)
-            
+                    either_witnesses.append(entry)
+
             if pros_witnesses:
                 parts.append(f"PROSECUTION/PLAINTIFF WITNESSES:\n" + "\n".join(pros_witnesses))
             if def_witnesses:
                 parts.append(f"DEFENSE WITNESSES:\n" + "\n".join(def_witnesses))
+            if either_witnesses:
+                parts.append(f"EITHER-SIDE WITNESSES (callable by both):\n" + "\n".join(either_witnesses))
         
         exhibits = case_data.get("exhibits", [])
         if exhibits:
@@ -782,7 +787,8 @@ RULES FOR DIRECT EXAMINATION:
             system_prompt,
             user_prompt,
             temperature=0.7,
-            max_tokens=300
+            max_tokens=300,
+            model=MODEL_MID
         )
     
     # =========================================================================
@@ -885,7 +891,8 @@ RULES FOR CROSS EXAMINATION:
             system_prompt,
             user_prompt,
             temperature=0.8,
-            max_tokens=250
+            max_tokens=250,
+            model=MODEL_MID
         )
     
     # =========================================================================
@@ -1226,11 +1233,20 @@ CRITICAL — HOW TO WRITE THIS (spoken aloud via TTS):
                 return obvious_issues[0]
             return None
 
-        # ---- LLM analysis for all remaining questions ----
-        # The LLM evaluates every question that wasn't caught by patterns.
-        # A small random skip prevents objections on literally every question
-        # and keeps the trial flowing naturally.
-        llm_skip_rate = 0.15  # skip 15% to keep things natural
+        # ---- Keyword pre-filter: skip LLM if question looks clean ----
+        _OBJECTION_KEYWORDS = {
+            "told", "said", "heard", "told you", "informed", "mentioned",
+            "think", "believe", "guess", "speculate", "suppose", "opinion",
+            "everything", "entire", "whole story",
+            "ridiculous", "lying", "convenient", "really",
+            "given that", "since you", "we all know",
+            "correct", "right", "true", "agree",
+        }
+        has_keyword = any(kw in question_lower for kw in _OBJECTION_KEYWORDS)
+        if not has_keyword and not is_direct:
+            return None
+
+        llm_skip_rate = 0.15
         if random.random() < llm_skip_rate:
             return None
 
@@ -1275,7 +1291,8 @@ Answer:"""
                 "You are a mock trial evidence rules analyst. Identify violations of the rules of evidence.",
                 analysis_prompt,
                 temperature=0.3,
-                max_tokens=30
+                max_tokens=30,
+                model=MODEL_NANO
             )
         except Exception as e:
             _attorney_logger.warning(f"Objection analysis LLM call failed: {e}")

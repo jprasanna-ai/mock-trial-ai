@@ -86,3 +86,9 @@ temp/
 # AGENT PREP CACHE (local file fallback for LLM-generated prep materials)
 # =============================================================================
 .agent_prep_cache/
+
+# =============================================================================
+# GENERATED AUDIO FILES (cached TTS audio — stored in Supabase, not git)
+# =============================================================================
+backend/app/data/prep_cache/audio/
+backend/app/data/prep_cache/tts/

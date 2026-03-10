@@ -1,40 +1,33 @@
 # Mock Trial AI Backend Dependencies
-# Per README.md: Python FastAPI with LangGraph
 
 # Web Framework
-fastapi>=0.109.0
-uvicorn>=0.27.0
-python-multipart>=0.0.6
+fastapi>=0.109.0,<1.0.0
+uvicorn>=0.27.0,<1.0.0
+python-multipart>=0.0.6,<1.0.0
 
 # Data Validation
-pydantic>=2.5.0
+pydantic>=2.5.0,<3.0.0
 
 # AI/ML
-openai>=1.12.0
-langgraph>=0.0.26
-anthropic>=0.40.0
-google-genai>=1.0.0
+openai>=1.12.0,<2.0.0
+langgraph>=0.0.26,<1.0.0
+anthropic>=0.40.0,<1.0.0
+google-genai>=1.0.0,<2.0.0
 
 # Vector Database
-pinecone>=5.0.0
+pinecone>=5.0.0,<6.0.0
 
 # Database (Supabase)
-supabase>=2.0.0
-# Optional: Direct PostgreSQL (if pooler connection works)
-# psycopg2-binary>=2.9.9
-# sqlalchemy>=2.0.25
+supabase>=2.0.0,<3.0.0
 
 # WebSocket support (included in fastapi)
-websockets>=12.0
+websockets>=12.0,<14.0
 
-# Audio processing
-# wave is part of standard library
+# PDF parsing (pypdf replaces PyPDF2 which has known CVEs)
+pypdf>=4.0.0,<6.0.0
 
-# PDF parsing
-PyPDF2>=3.0.0
-
-# HTTP client (for fetching case PDFs)
-httpx>=0.27.0
+# HTTP client
+httpx>=0.27.0,<1.0.0
 
 # Development
-python-dotenv>=1.0.0
+python-dotenv>=1.0.0,<2.0.0

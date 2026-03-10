@@ -92,6 +92,34 @@
 - [x] Judge comments and justifications
 - [x] Role-specific scoring categories (5 per role)
 
+## Persistent TTS Audio
+- [x] TTS audio stored in Supabase Storage (`tts-audio-cache` bucket)
+- [x] SHA-256 hash key (text + role + speaker) for deterministic caching
+- [x] Audio generated once during live trial, never regenerated for playback
+- [x] Public serving via `GET /api/public/tts/audio/{cache_key}` (no auth)
+- [x] Transcript API returns `audio_keys` map linking entries to cached audio
+- [x] Backfill endpoint (`POST /api/admin/backfill-audio`) with async `BackgroundTasks`
+- [x] Backfill status monitoring via `GET /api/admin/backfill-status`
+
+## Recorded Trials & Public Pages
+- [x] `/trials` public listing of completed trials (no auth required)
+- [x] `/trials/{sessionId}` unified detail page for both public and dashboard trials
+- [x] Middleware allows all `/trials/*` routes without authentication
+- [x] Detail page uses plain `fetch` (not `apiFetch`) for public access
+- [x] Tabbed UI: Transcript tab with audio playback, Scores tab with detailed breakdown
+- [x] Audio controls: Play Full Trial, Pause, Resume, Stop, per-entry play buttons
+- [x] Graceful handling: auto-switch to Scores tab when transcript unavailable
+- [x] "No data available" fallback when neither transcript nor scores exist
+- [x] Dashboard "Recent Trials" and "Your Performance" route to `/trials/{sessionId}`
+- [x] ScoresPanel with verdict banner, comparison bar, expandable participant cards
+- [x] Per-category scores with visual bars, justifications, and judge comments
+
+## Historical Score Access
+- [x] `/api/scoring/{session_id}/full-report` works without live session (DB fallback)
+- [x] `/api/scoring/{session_id}/verdict` computes from DB scores if no live session
+- [x] Case metadata (name, ID, phase) resolved from `transcript_storage` as fallback
+- [x] 404 only returned when absolutely no scoring data exists
+
 ## Deployment
 - [x] Vercel deployment (frontend, standalone output)
 - [x] Render deployment (backend, render.yaml blueprint)

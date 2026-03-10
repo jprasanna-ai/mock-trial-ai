@@ -57,7 +57,7 @@ class LLMRequest:
     """
     system_prompt: str
     user_prompt: str
-    persona: PersonaContext
+    persona: Optional[PersonaContext] = None
     conversation_history: List[Dict[str, str]] = None
     temperature: float = 0.7
     max_tokens: int = 500
@@ -165,14 +165,13 @@ class LLMService:
         temperature = overrides.get("temperature", request.temperature)
         max_tokens = overrides.get("max_tokens", request.max_tokens)
         
-        logger.debug(
-            f"LLM call for {request.persona.role} '{request.persona.name}' "
-            f"using model {model}"
-        )
+        persona_label = f"{request.persona.role} '{request.persona.name}'" if request.persona else "no-persona"
+        logger.debug(f"LLM call for {persona_label} using model {model}")
 
+        trimmed_history = request.conversation_history[-5:] if request.conversation_history else []
         messages = [{"role": "system", "content": conditioned_system}]
-        if request.conversation_history:
-            messages.extend(request.conversation_history[-10:])
+        if trimmed_history:
+            messages.extend(trimmed_history)
         messages.append({"role": "user", "content": request.user_prompt})
 
         from .llm_providers import chat_completion as provider_chat, get_provider_for_model
@@ -185,7 +184,7 @@ class LLMService:
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                conversation_history=request.conversation_history,
+                conversation_history=trimmed_history,
             )
         else:
             content = provider_chat(
@@ -210,9 +209,10 @@ class LLMService:
         temperature = overrides.get("temperature", request.temperature)
         max_tokens = overrides.get("max_tokens", request.max_tokens)
 
+        trimmed_history = request.conversation_history[-5:] if request.conversation_history else []
         messages = [{"role": "system", "content": conditioned_system}]
-        if request.conversation_history:
-            messages.extend(request.conversation_history[-10:])
+        if trimmed_history:
+            messages.extend(trimmed_history)
         messages.append({"role": "user", "content": request.user_prompt})
 
         from .llm_providers import chat_completion_async as provider_chat_async, get_provider_for_model
@@ -225,7 +225,7 @@ class LLMService:
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                conversation_history=request.conversation_history,
+                conversation_history=trimmed_history,
             )
         else:
             content = await provider_chat_async(
@@ -238,14 +238,16 @@ class LLMService:
     def _apply_persona_conditioning(
         self,
         system_prompt: str,
-        persona: PersonaContext
+        persona: Optional[PersonaContext]
     ) -> str:
         """
         Apply persona conditioning to the system prompt.
         
         Per ARCHITECTURE.md: All persona and prompt assembly done in backend.
         """
-        # Build persona conditioning prefix
+        if persona is None:
+            return system_prompt
+
         persona_lines = [
             f"You are {persona.name}, acting as {persona.role}.",
         ]
@@ -308,7 +310,7 @@ def get_llm_service() -> LLMService:
 def call_llm(
     system_prompt: str,
     user_prompt: str,
-    persona: PersonaContext,
+    persona: PersonaContext = None,
     conversation_history: List[Dict[str, str]] = None,
     temperature: float = 0.7,
     max_tokens: int = 500,
@@ -351,7 +353,7 @@ def call_llm(
 async def call_llm_async(
     system_prompt: str,
     user_prompt: str,
-    persona: PersonaContext,
+    persona: PersonaContext = None,
     conversation_history: List[Dict[str, str]] = None,
     temperature: float = 0.7,
     max_tokens: int = 500,

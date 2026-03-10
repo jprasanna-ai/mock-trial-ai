@@ -54,15 +54,19 @@ _INTERROGATION_HEADER_RE = re.compile(
 def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> List[Dict[str, Any]]:
     """Extract text from PDF bytes, returning per-page results."""
     try:
-        import PyPDF2
-        reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
-        pages = []
-        for i, page in enumerate(reader.pages):
-            text = page.extract_text() or ""
-            pages.append({"page": i + 1, "text": text})
-        return pages
+        from PyPDF2 import PdfReader
     except ImportError:
-        raise ImportError("PyPDF2 is required for PDF parsing")
+        try:
+            from pypdf import PdfReader
+        except ImportError:
+            raise ImportError("PyPDF2 or pypdf is required for PDF parsing. Install with: pip install PyPDF2")
+    
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    pages = []
+    for i, page in enumerate(reader.pages):
+        text = page.extract_text() or ""
+        pages.append({"page": i + 1, "text": text})
+    return pages
 
 
 def _get_page_text(pages: List[Dict[str, Any]], page_num: int) -> str:

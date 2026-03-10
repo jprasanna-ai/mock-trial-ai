@@ -593,17 +593,21 @@ Attorney question → Opposing attorney evaluates → Objection raised (if warra
 ## 19. Scoring & Live Stats
 
 - **Live scoring** updates after each witness examination and after opening/closing arguments
+- Opening attorney scores are preserved across witness examinations (merged, not replaced)
 - Scores are displayed in the **Scores & Stats** panel (always visible, top of right column)
 - Each score bar clearly labels **PROS** (prosecution) or **DEF** (defense)
 - Witness scores show which side called them
 - **Role-specific categories**: Opening attorneys, direct/cross attorneys, closing attorneys, and witnesses each have 5 tailored scoring categories (see Section 24)
 - Click **View Detailed Scores** to navigate to the full score breakdown page at `/scores/{sessionId}`
+- **Email Report**: From the Score Details page, click "Email Report" to send transcript and scores to others via email
 
 ---
 
 ## 20. TTS Audio Pipeline
 
-Audio playback uses a cascading fallback chain for reliability:
+### Live Trial Audio
+
+Audio playback during live trials uses a cascading fallback chain for reliability:
 
 ```
 1. Preloaded blob (prefetched during Q&A generation)
@@ -621,6 +625,17 @@ Audio playback uses a cascading fallback chain for reliability:
 - Frontend maintains an `AudioContext` to prevent browser autoplay revocation
 - Safety timers resolve playback promises if `onended` events fail to fire
 - Chrome `speechSynthesis.cancel()` before each utterance prevents queue hang
+
+### Persistent TTS Audio Storage
+
+All TTS audio generated during live trials is permanently stored in **Supabase Storage** (`tts-audio-cache` bucket):
+
+- Audio files are keyed by a **SHA-256 hash** of (text + role + speaker), ensuring deterministic, unique storage
+- Audio is generated **once** during the live trial and never regenerated for playback
+- Stored as MP3 files, served via `GET /api/public/tts/audio/{cache_key}` (no auth required)
+- The transcript API (`GET /api/trial/transcripts/{session_id}`) returns an `audio_keys` dictionary mapping each transcript entry to its cached audio key
+- A backfill endpoint (`POST /api/admin/backfill-audio`) can generate audio for historical transcripts that predate the caching system; runs asynchronously via `BackgroundTasks` to prevent server blocking
+- Backfill status can be monitored via `GET /api/admin/backfill-status`
 
 ---
 
@@ -709,23 +724,26 @@ Trial transcripts are progressively saved to **Supabase Storage** during the tri
 |----------|-------------|
 | `POST /api/trial/{session_id}/save-transcript` | Manually save current transcript |
 | `GET /api/trial/transcripts/history` | List all transcripts for the current user |
-| `GET /api/trial/transcripts/{session_id}` | Get full transcript data for a session |
+| `GET /api/trial/transcripts/{session_id}` | Get full transcript data (includes `audio_keys` map) |
+| `GET /api/trial/transcripts/public` | List all completed trials (public, no auth) |
 
 ---
 
 ## 24. Score Detail Page
 
-The `/scores/{sessionId}` page provides a detailed breakdown of judge scoring.
+Scoring details are displayed in two locations:
+
+1. **`/scores/{sessionId}`** — Full score breakdown page (accessible during/after live trial)
+2. **`/trials/{sessionId}`** (Scores tab) — Unified trial detail page showing scores alongside transcript and audio (used by both Recorded Trials and dashboard Recent Trials)
 
 ### What It Shows
 
-1. **Score Breakdown by Category** — For each scoring category, see how every team member scored with the judge's justification
-2. **Individual Performance** — Per-participant cards (Prosecution vs Defense) with:
-   - Category scores with score bars and judge justification
-   - Strengths (categories scored 7+) highlighted in green
-   - Suggestions to improve (categories below 7) highlighted in amber
+1. **Verdict Banner** — Which side won, with average score comparison
+2. **Score Comparison Bar** — Visual prosecution vs defense score split
+3. **Individual Performance** — Per-participant expandable cards (Prosecution vs Defense) with:
+   - Category scores with visual score bars and judge justification
    - Overall judge comments
-3. **Scoring Categories Reference** — Descriptions of what each category measures
+4. **Scoring Categories Reference** — Descriptions of what each category measures
 
 ### Role-Specific Scoring
 
@@ -740,7 +758,142 @@ Each participant is scored only on categories relevant to their role:
 
 ---
 
-## 25. Deployment
+## 25. Either-Side Witness Assignment
+
+Witnesses marked as "either" in the case materials can be called by either side. The system handles them as follows:
+
+### Automatic Random Assignment
+
+When a session is initialized, "either" witnesses are randomly divided between prosecution and defense (roughly evenly). This determines:
+- Which side calls the witness during the trial
+- Whether direct or cross examination is "friendly"
+- The strategic context in the witness's prep materials
+
+### Reassignment During Preparation
+
+In the Preparation Panel (both Witnesses and Agent Prep tabs), "either" witnesses display a toggle button allowing reassignment between Prosecution and Defense. Reassignment triggers:
+- Agent recreation with the new side context
+- Regeneration of witness outlines and prep materials aligned to the new side
+- Update of the prosecution/defense witness lists
+
+### Witness Calling Restrictions
+
+Some case materials specify hard restrictions (prosecution-only, defense-only). These are enforced:
+- During trial, the backend validates that only the allowed side can call a restricted witness
+- Hard restrictions override random assignments for "either" witnesses
+- The trial UI only shows callable witnesses for the current case-in-chief
+
+---
+
+## 26. Audio Toggle & Trial Flow Controls
+
+### Audio Toggle
+
+Users can enable or disable TTS audio at any point:
+- **Before trial**: A toggle switch appears above the "Begin Trial" button in the prep phase
+- **During trial**: A speaker icon button in the courtroom header toggles audio on/off
+- When audio is disabled, all TTS generation and playback is skipped — the trial continues on transcript only
+- Audio can be re-enabled at any time; subsequent speech will use TTS
+
+### Trial Flow Controls
+
+During an active trial, the courtroom header displays control buttons:
+
+| Control | Behavior |
+|---------|----------|
+| **Pause** | Suspends trial flow after the current speech/action completes. The trial freezes in place. |
+| **Resume** | Continues the trial from where it was paused. |
+| **Stop** | Permanently halts the trial. The session transitions to scoring. Cannot be undone. |
+
+These controls use cooperative checking — the trial flow checks for pause/stop between examination phases, witness calls, and Q&A pairs.
+
+---
+
+## 27. Email Trial Reports
+
+The Score Details page (`/scores/{sessionId}`) includes an "Email Report" button that sends a formatted HTML email containing:
+
+- **Scores & Performance**: All participant scores with category breakdowns and judge justifications
+- **Trial Transcript**: Full transcript with speaker labels, phase separators, and color-coded roles
+
+### Configuration
+
+Add SMTP settings to `backend/.env`:
+
+```bash
+SMTP_HOST=smtp.gmail.com       # SMTP server hostname
+SMTP_PORT=587                  # SMTP port (587 for TLS, 465 for SSL)
+SMTP_USER=your-email@gmail.com # SMTP login username
+SMTP_PASSWORD=your-app-password # SMTP password or app password
+SMTP_FROM=your-email@gmail.com # Sender address (defaults to SMTP_USER)
+```
+
+For Gmail, use an [App Password](https://myaccount.google.com/apppasswords) instead of your account password.
+
+### API Endpoint
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/trial/{sessionId}/email-report` | POST | Send transcript and/or scores to specified email addresses |
+
+**Request body:**
+```json
+{
+  "recipients": ["user@example.com", "coach@school.edu"],
+  "include_transcript": true,
+  "include_scores": true,
+  "sender_name": "John Doe"
+}
+```
+
+---
+
+## 28. Recorded Trials & Public Trial Pages
+
+### Public Trial Listing
+
+The `/trials` page is publicly accessible (no login required) and displays all completed trial simulations. Each trial card shows the case name, date, role played, and exchange count.
+
+Clicking any trial navigates to `/trials/{sessionId}` — the **unified trial detail page**.
+
+### Unified Trial Detail Page (`/trials/{sessionId}`)
+
+Both **Recorded Trials** (public, from `/trials`) and **Recent Trials** (authenticated, from the dashboard) use the **same detail page**. The underlying data may differ depending on the trial:
+
+| Data Source | Availability |
+|-------------|-------------|
+| Transcript | Available for trials with stored transcripts in Supabase Storage |
+| Audio playback | Available for trials with pre-generated TTS audio in `tts-audio-cache` |
+| Scores | Available for trials with scoring data in `live_scores` DB table |
+
+**Graceful data handling:**
+- If a trial has both transcript and scores, both tabs are available
+- If a trial has scores but no transcript (e.g., seeded demo data), the page auto-switches to the Scores tab
+- If neither is available, a "No data available" message is shown
+- Audio playback controls (Play Full Trial, Pause, Resume, Stop) appear only when cached audio exists
+
+**Tabbed UI:**
+- **Transcript tab** — Full trial transcript with inline audio play buttons per entry, plus "Play Full Trial" with pause/resume/stop controls
+- **Scores tab** — Verdict banner, score comparison bar, expandable participant cards with per-category scores, justifications, and judge comments
+
+### Public Routes
+
+The middleware allows all `/trials/*` routes without authentication. The detail page uses plain `fetch` (not authenticated `apiFetch`) so it works for both logged-in and anonymous visitors.
+
+### Dashboard Integration
+
+From the dashboard, clicking any "Recent Trial" or "Your Performance" entry navigates to `/trials/{sessionId}` — the same page that public recorded trials use.
+
+### Backend Endpoints for Historical Trials
+
+Scoring endpoints (`/api/scoring/{session_id}/full-report`, `/api/scoring/{session_id}/verdict`) work for both active in-memory sessions and historical completed trials:
+- If no live session exists (e.g., after server restart), scores are loaded from the `live_scores` database table
+- Case metadata (name, ID, phase) falls back to `transcript_storage` if the session object is unavailable
+- A 404 is only returned if absolutely no scoring data exists
+
+---
+
+## 29. Deployment
 
 The application is deployed as a split architecture:
 

@@ -10,8 +10,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Mock Trial",
-  description: "Practice mock trial skills with AI-powered attorneys, witnesses, and judges",
+  title: "MockPrep AI — Mock Trial Preparation Platform",
+  description: "AI-powered mock trial preparation platform. Practice openings, direct & cross examinations, and closings with intelligent AI opponents. Get scored by AI judges and sharpen your advocacy skills.",
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",

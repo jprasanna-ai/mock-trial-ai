@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { apiFetch, API_BASE } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 
 interface CaseMetadata {
   id: string;
@@ -98,6 +98,7 @@ const CheckIcon = ({ className = "" }: { className?: string }) => (
 
 export default function CasesPage() {
   const router = useRouter();
+  const [userInitial, setUserInitial] = useState("U");
   const [allCases, setAllCases] = useState<CaseMetadata[]>([]);
   const [uploadedCases, setUploadedCases] = useState<UploadedCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,6 +106,7 @@ export default function CasesPage() {
   const [difficulty, setDifficulty] = useState<"all" | "beginner" | "intermediate" | "advanced">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedCaseForUpload, setSelectedCaseForUpload] = useState<CaseMetadata | null>(null);
@@ -116,23 +118,30 @@ export default function CasesPage() {
   const [selectedMode, setSelectedMode] = useState<"participate" | "spectator">("participate");
   const [selectedSide, setSelectedSide] = useState<"prosecution" | "defense">("prosecution");
   const [selectedSubRole, setSelectedSubRole] = useState<"opening" | "direct_cross" | "closing">("direct_cross");
+  const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [viewingFilesFor, setViewingFilesFor] = useState<CaseMetadata | null>(null);
   const [caseFiles, setCaseFiles] = useState<Array<{ name: string; section: string; size: number; url?: string }>>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserInitial(data.user.email[0].toUpperCase());
+    });
+  }, []);
 
   const handleViewFiles = async (caseItem: CaseMetadata) => {
     setViewingFilesFor(caseItem);
     setLoadingFiles(true);
     setCaseFiles([]);
     try {
-      const res = await fetch(`${API_BASE}/api/case/${caseItem.id}/storage/files`);
+      const res = await apiFetch(`${API_BASE}/api/case/${caseItem.id}/storage/files`);
       if (res.ok) {
         const data = await res.json();
         const files = data.files || [];
         const filesWithUrls = await Promise.all(
           files.map(async (f: { name: string; section: string; size: number }) => {
             try {
-              const urlRes = await fetch(
+              const urlRes = await apiFetch(
                 `${API_BASE}/api/case/${caseItem.id}/storage/files/${f.section}/${f.name}/url`
               );
               if (urlRes.ok) {
@@ -156,8 +165,8 @@ export default function CasesPage() {
     setIsLoading(true);
     try {
       const [demoRes, uploadedRes] = await Promise.all([
-        fetch(`${API_BASE}/api/case/demo`),
-        fetch(`${API_BASE}/api/case/?include_demo=false`),
+        apiFetch(`${API_BASE}/api/case/demo`),
+        apiFetch(`${API_BASE}/api/case/?include_demo=false`),
       ]);
 
       if (demoRes.ok) {
@@ -183,6 +192,7 @@ export default function CasesPage() {
   const handleUpload = async (file: File) => {
     setIsUploading(true);
     setUploadError(null);
+    setUploadProgress("Uploading file...");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -191,9 +201,7 @@ export default function CasesPage() {
       let uploadedCaseId = "";
       let uploadedTitle = "";
 
-      // If uploading to a specific section (not the default full PDF upload)
       if (uploadSection !== "summary" || newCaseName) {
-        // Generate a case ID from the name or file
         const caseId = newCaseName 
           ? `custom_${newCaseName.toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 30)}_${Date.now()}`
           : `custom_${file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 30)}_${Date.now()}`;
@@ -202,7 +210,8 @@ export default function CasesPage() {
           formData.append("title", newCaseName);
         }
 
-        const response = await fetch(`${API_BASE}/api/case/${caseId}/sections/${uploadSection}`, {
+        setUploadProgress("Parsing PDF with AI — this may take up to a minute...");
+        const response = await apiFetch(`${API_BASE}/api/case/${caseId}/sections/${uploadSection}`, {
           method: "POST",
           body: formData,
         });
@@ -215,12 +224,12 @@ export default function CasesPage() {
         uploadedCaseId = caseId;
         uploadedTitle = newCaseName || file.name.replace(/\.[^/.]+$/, '');
       } else {
-        // Original full PDF/JSON upload
         const endpoint = file.name.endsWith(".json")
           ? `${API_BASE}/api/case/upload/json`
           : `${API_BASE}/api/case/upload/pdf`;
 
-        const response = await fetch(endpoint, {
+        setUploadProgress("Parsing PDF with AI — this may take up to a minute...");
+        const response = await apiFetch(endpoint, {
           method: "POST",
           body: formData,
         });
@@ -235,9 +244,9 @@ export default function CasesPage() {
         uploadedTitle = data.name || file.name.replace(/\.[^/.]+$/, '');
       }
 
+      setUploadProgress("Finalizing...");
       await loadCases();
       
-      // Show success state with option to practice
       setUploadSuccess({ caseId: uploadedCaseId, title: uploadedTitle });
       setNewCaseName("");
       setUploadSection("summary");
@@ -245,6 +254,7 @@ export default function CasesPage() {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
     }
   };
 
@@ -267,13 +277,14 @@ export default function CasesPage() {
 
   const handleConfirmRole = async () => {
     if (!showRoleSelect) return;
+    setIsStartingTrial(true);
     const { caseId } = showRoleSelect;
     const humanRole = selectedMode === "spectator"
       ? "spectator"
       : selectedSide === "prosecution" ? "attorney_plaintiff" : "attorney_defense";
 
     try {
-      const response = await fetch(`${API_BASE}/api/session/create`, {
+      const response = await apiFetch(`${API_BASE}/api/session/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -288,7 +299,7 @@ export default function CasesPage() {
       const data = await response.json();
       const sessionId = data.session_id;
 
-      await fetch(`${API_BASE}/api/session/${sessionId}/initialize`, {
+      await apiFetch(`${API_BASE}/api/session/${sessionId}/initialize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -297,13 +308,15 @@ export default function CasesPage() {
       router.push(`/courtroom/${sessionId}`);
     } catch (err) {
       console.error("Failed to start case:", err);
+    } finally {
+      setIsStartingTrial(false);
     }
   };
 
   const handleToggleFavorite = async (caseId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const response = await fetch(`${API_BASE}/api/case/${caseId}/favorite`, {
+      const response = await apiFetch(`${API_BASE}/api/case/${caseId}/favorite`, {
         method: "POST",
       });
       if (response.ok) {
@@ -319,15 +332,18 @@ export default function CasesPage() {
 
   const handleDeleteCase = async (caseId: string) => {
     try {
-      const response = await fetch(`${API_BASE}/api/case/${caseId}/materials`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        await loadCases();
-        setShowDeleteConfirm(null);
+      await apiFetch(`${API_BASE}/api/case/${caseId}/materials`, { method: "DELETE" }).catch(() => {});
+      const res = await apiFetch(`${API_BASE}/api/case/${caseId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setUploadError(data.detail || "Failed to delete case. Please try again.");
       }
+      await loadCases();
+      setShowDeleteConfirm(null);
     } catch (err) {
       console.error("Failed to delete case:", err);
+      setUploadError("Failed to delete case. Please try again.");
+      setShowDeleteConfirm(null);
     }
   };
 
@@ -339,7 +355,7 @@ export default function CasesPage() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`${API_BASE}/api/case/${caseId}/sections/${section}`, {
+      const response = await apiFetch(`${API_BASE}/api/case/${caseId}/sections/${section}`, {
         method: "POST",
         body: formData,
       });
@@ -384,30 +400,33 @@ export default function CasesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-950">
       {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/")}
-                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-              >
-                <BackIcon className="w-5 h-5" />
-                <span className="hidden sm:inline">Back to Home</span>
-              </button>
-              <div className="h-6 w-px bg-slate-700" />
-              <h1 className="text-xl font-bold text-white flex items-center gap-2">
-                <ScalesIcon className="w-6 h-6 text-amber-400" />
-                Case Library
-              </h1>
-            </div>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
-            >
-              <UploadIcon className="w-5 h-5" />
-              <span className="hidden sm:inline">Upload Case</span>
+      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-0">
+          <div className="flex items-center justify-between h-16">
+            <button onClick={() => router.push("/")} className="flex items-center gap-2.5 text-white hover:opacity-90 transition-opacity">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <ScalesIcon className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-base font-bold tracking-tight">MockPrep<span className="text-amber-400">AI</span></span>
+              </div>
             </button>
+            <nav className="hidden md:flex items-center gap-1">
+              <button onClick={() => router.push("/")} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">Dashboard</button>
+              <button className="px-4 py-2 text-sm font-medium text-white bg-slate-800/60 rounded-lg transition-colors">Case Library</button>
+              <button onClick={() => router.push("/about")} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">Who We Are</button>
+              <button onClick={() => router.push("/contact")} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">Contact</button>
+            </nav>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <UploadIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Upload Case</span>
+              </button>
+              <button onClick={() => router.push("/profile")} className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-bold hover:opacity-80 transition-opacity" title="Profile">{userInitial}</button>
+            </div>
           </div>
         </div>
       </header>
@@ -567,19 +586,16 @@ export default function CasesPage() {
                       >
                         <StarIcon className="w-4 h-4" filled={caseItem.is_favorite} />
                       </button>
-                      {/* Delete Button (for any case with uploaded content) */}
-                      {(caseItem.is_uploaded || caseItem.has_uploads) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteConfirm(caseItem.id);
-                          }}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors"
-                          title="Delete uploaded materials"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDeleteConfirm(caseItem.id);
+                        }}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors"
+                        title="Delete case"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -693,7 +709,16 @@ export default function CasesPage() {
                   key={uploaded.case_id}
                   className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4 hover:border-indigo-500/50 transition-all"
                 >
-                  <h3 className="font-semibold text-white mb-2">{uploaded.name}</h3>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-semibold text-white">{uploaded.name}</h3>
+                    <button
+                      onClick={() => setShowDeleteConfirm(uploaded.case_id)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors shrink-0"
+                      title="Delete case"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
                   <p className="text-slate-500 text-sm mb-3">From: {uploaded.source_filename}</p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     <span
@@ -849,15 +874,24 @@ export default function CasesPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowRoleSelect(null)}
-                className="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors font-medium"
+                disabled={isStartingTrial}
+                className="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmRole}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors font-medium"
+                disabled={isStartingTrial}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
               >
-                Start Trial
+                {isStartingTrial ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Setting up trial...
+                  </>
+                ) : (
+                  "Start Trial"
+                )}
               </button>
             </div>
           </div>
@@ -969,9 +1003,9 @@ export default function CasesPage() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-white mb-4">Delete Case Materials?</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Delete Case?</h2>
             <p className="text-slate-400 mb-6">
-              This will permanently delete the uploaded case materials. This action cannot be undone.
+              This will permanently delete the case, its uploaded materials, and all associated data. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
@@ -1104,9 +1138,10 @@ export default function CasesPage() {
 
                 <div className="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center mb-4">
                   {isUploading ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-slate-400">Uploading and parsing case materials...</span>
+                    <div className="flex flex-col items-center gap-3 py-2">
+                      <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-slate-300 font-medium">{uploadProgress || "Processing..."}</span>
+                      <span className="text-slate-500 text-xs">Please don&apos;t close this window</span>
                     </div>
                   ) : (
                     <>
@@ -1216,9 +1251,10 @@ export default function CasesPage() {
 
                 <div className="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center mb-4">
                   {isUploading ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-slate-400">Uploading and parsing case materials...</span>
+                    <div className="flex flex-col items-center gap-3 py-2">
+                      <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-slate-300 font-medium">{uploadProgress || "Processing..."}</span>
+                      <span className="text-slate-500 text-xs">Please don&apos;t close this window</span>
                     </div>
                   ) : (
                     <>

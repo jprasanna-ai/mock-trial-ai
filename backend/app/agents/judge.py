@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ..services.llm_service import call_llm, PersonaContext
+from ..config import MODEL_MID, MODEL_NANO
 
 from ..graph.trial_graph import (
     TrialState,
@@ -310,18 +311,20 @@ class JudgeAgent:
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.5,
-        max_tokens: int = 300
+        max_tokens: int = 300,
+        model: str = None
     ) -> str:
         """Generate text response via backend LLM service with per-agent overrides."""
-        if self.persona.custom_system_prompt:
+        resolved_model = self.persona.llm_model or model or self.MODEL
+        if resolved_model != MODEL_NANO and self.persona.custom_system_prompt:
             system_prompt = self.persona.custom_system_prompt + "\n\n" + system_prompt
         return call_llm(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            persona=self._persona_context,
+            persona=self._persona_context if resolved_model != MODEL_NANO else None,
             temperature=self.persona.llm_temperature if self.persona.llm_temperature is not None else temperature,
             max_tokens=self.persona.llm_max_tokens if self.persona.llm_max_tokens is not None else max_tokens,
-            model=self.persona.llm_model or self.MODEL,
+            model=resolved_model,
         )
     
     def _build_system_prompt(self, context: str, is_scoring: bool = False) -> str:
@@ -541,7 +544,8 @@ SPOKEN: Overruled. The witness may answer.
             system_prompt,
             analysis_prompt,
             temperature=0.3,  # Consistent rulings
-            max_tokens=150
+            max_tokens=150,
+            model=MODEL_MID
         )
         
         # Parse response
@@ -646,7 +650,8 @@ NO INTERRUPT
             self._build_system_prompt(interrupt_context),
             "Decide whether to interrupt.",
             temperature=0.4,
-            max_tokens=100
+            max_tokens=100,
+            model=MODEL_NANO
         )
         
         if response.startswith("INTERRUPT:"):
@@ -687,7 +692,8 @@ NO INTERRUPT
             self._build_system_prompt(f"Reason for interrupt: {reason}"),
             "Generate a brief judicial interrupt statement.",
             temperature=0.5,
-            max_tokens=50
+            max_tokens=50,
+            model=MODEL_NANO
         )
     
     # =========================================================================
@@ -721,6 +727,76 @@ NO INTERRUPT
     def thank_jury(self) -> str:
         """Thank jury after trial."""
         return "Thank you, members of the jury. This trial is now concluded."
+
+    def generate_verdict(
+        self,
+        prosecution_avg: float,
+        defense_avg: float,
+        prosecution_details: Dict[str, float],
+        defense_details: Dict[str, float],
+        case_name: str = "",
+        transcript_summary: str = "",
+    ) -> str:
+        """Generate a verdict announcement based on scored performance.
+
+        This is a mock trial performance verdict — not a legal guilty/not-guilty
+        finding. The judge announces which team performed better overall and
+        highlights the decisive scoring categories.
+        """
+        winner = "Prosecution" if prosecution_avg > defense_avg else "Defense"
+        margin = abs(prosecution_avg - defense_avg)
+
+        top_pros = sorted(prosecution_details.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_def = sorted(defense_details.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        prompt = f"""You are Judge {self.persona.name} presiding over a mock trial competition.
+The trial is complete and all participants have been scored by the judicial panel.
+
+CASE: {case_name or "Mock Trial Case"}
+
+SCORING RESULTS:
+- Prosecution average: {prosecution_avg:.1f}/10
+- Defense average: {defense_avg:.1f}/10
+- Winning team: {winner} (by {margin:.1f} points)
+
+Prosecution strengths: {', '.join(f'{c.replace("_"," ").title()} ({s:.1f})' for c,s in top_pros)}
+Defense strengths: {', '.join(f'{c.replace("_"," ").title()} ({s:.1f})' for c,s in top_def)}
+
+{f"TRIAL HIGHLIGHTS: {transcript_summary}" if transcript_summary else ""}
+
+Deliver a VERDICT ANNOUNCEMENT (150-250 words) that:
+1. Addresses the courtroom formally
+2. Acknowledges BOTH teams' efforts with specific praise
+3. Announces the {winner} as the winner and explains why based on the scores
+4. Highlights 2-3 decisive scoring categories that determined the outcome
+5. Offers brief constructive feedback for the losing team
+6. Concludes with an encouraging remark about the competition
+
+Use the tone of a {self.persona.temperament.value} judge. Speak directly — this goes to TTS."""
+
+        persona_context = PersonaContext(
+            role="judge",
+            name=self.persona.name,
+            style="authoritative",
+            authority=self.persona.authority_level,
+            formality=0.9,
+        )
+
+        try:
+            return call_llm(
+                system_prompt=f"You are Judge {self.persona.name}, a {self.persona.temperament.value} mock trial judge delivering the final verdict.",
+                user_prompt=prompt,
+                persona=persona_context,
+                max_tokens=400,
+                temperature=0.7,
+            )
+        except Exception as e:
+            return (
+                f"This court finds that the {winner} has prevailed in this mock trial "
+                f"with an average score of {max(prosecution_avg, defense_avg):.1f} to "
+                f"{min(prosecution_avg, defense_avg):.1f}. Both teams showed excellent "
+                f"preparation and advocacy. This trial is now concluded."
+            )
     
     # =========================================================================
     # SCORING (per SCORING.md)
@@ -765,22 +841,21 @@ NO INTERRUPT
             memory_context = trial_memory.build_scoring_context()
         
         cats_to_score = categories or ALL_SCORING_CATEGORIES
-        for category in cats_to_score:
-            score, justification = self._score_category(
-                category,
-                participant_role,
-                participant_transcript,
-                transcript,
-                audio_metrics,
-                memory_context=memory_context,
-            )
-            
+        batch_results = self._score_all_categories(
+            cats_to_score,
+            participant_role,
+            participant_transcript,
+            transcript,
+            audio_metrics,
+            memory_context=memory_context,
+        )
+        for category, (score, justification) in batch_results.items():
             ballot.scores[category] = CategoryScore(
                 category=category,
                 score=score,
-                justification=justification
+                justification=justification,
             )
-        
+
         ballot.overall_comments = self._generate_overall_comments(
             participant_role,
             ballot.scores,
@@ -802,6 +877,80 @@ NO INTERRUPT
             if entry.get("role") == role.value
         ]
     
+    def _score_all_categories(
+        self,
+        categories: List[ScoringCategory],
+        participant_role: Role,
+        participant_transcript: List[Dict[str, Any]],
+        full_transcript: List[Dict[str, Any]],
+        audio_metrics: Optional[Dict[str, Any]],
+        memory_context: str = "",
+    ) -> Dict[ScoringCategory, tuple]:
+        """Score ALL categories in a single LLM call and return a dict of (score, justification)."""
+        import json as _json
+
+        all_transcript = self._format_transcript_for_scoring(participant_transcript)
+        if not all_transcript or all_transcript == "No transcript entries.":
+            return {c: (5, "No relevant activity observed for this category.") for c in categories}
+
+        cat_defs = "\n".join(
+            f"- {c.value}: {self._get_category_definition(c)}" for c in categories
+        )
+
+        audio_context = ""
+        if audio_metrics:
+            audio_context = (
+                f"AUDIO: confidence={audio_metrics.get('confidence','N/A')}, "
+                f"clarity={audio_metrics.get('clarity','N/A')}"
+            )
+
+        memory_section = f"\nLIVE OBSERVATIONS:\n{memory_context}" if memory_context else ""
+
+        scoring_context = f"""SCORING TASK — score the participant on ALL categories at once.
+Participant: {participant_role.value}
+Scale: 1-10
+
+CATEGORIES TO SCORE:
+{cat_defs}
+
+TRANSCRIPT (ONLY evidence you may use):
+{all_transcript}
+{audio_context}{memory_section}
+
+SCORING STYLE: {self._get_scoring_style_instruction()}
+
+Respond with ONLY a JSON object mapping each category key to {{"score": <1-10>, "justification": "<2-3 sentences>"}}.
+Example: {{"opening_clarity": {{"score": 7, "justification": "Clear roadmap..."}}}}
+"""
+        system_prompt = self._build_system_prompt(scoring_context, is_scoring=True)
+        response = self._generate(
+            system_prompt,
+            "Score all categories now. Return ONLY valid JSON.",
+            temperature=0.4,
+            max_tokens=200 * len(categories),
+            model=MODEL_MID,
+        )
+
+        results: Dict[ScoringCategory, tuple] = {}
+        try:
+            start = response.find("{")
+            end = response.rfind("}") + 1
+            if start >= 0 and end > start:
+                data = _json.loads(response[start:end])
+                for cat in categories:
+                    entry = data.get(cat.value, {})
+                    if isinstance(entry, dict):
+                        s = max(1, min(10, int(entry.get("score", 5))))
+                        j = str(entry.get("justification", ""))
+                        results[cat] = (s, j)
+        except Exception:
+            pass
+
+        for cat in categories:
+            if cat not in results:
+                results[cat] = (5, "Scoring unavailable for this category.")
+        return results
+
     def _score_category(
         self,
         category: ScoringCategory,
@@ -890,7 +1039,8 @@ Be specific. Reference actual moments from the transcript.
             system_prompt,
             scoring_prompt,
             temperature=0.4,  # Consistent scoring
-            max_tokens=250
+            max_tokens=250,
+            model=MODEL_MID
         )
         
         # Parse response
@@ -1087,7 +1237,8 @@ Be constructive and specific.
             self._build_system_prompt(context, is_scoring=True),
             "Write overall comments for this ballot.",
             temperature=0.6,
-            max_tokens=200
+            max_tokens=200,
+            model=MODEL_MID
         )
     
     # =========================================================================

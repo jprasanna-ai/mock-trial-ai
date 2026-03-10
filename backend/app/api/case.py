@@ -17,6 +17,7 @@ import json
 import uuid
 import hashlib
 import logging
+import asyncio
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
@@ -26,6 +27,7 @@ from pydantic import BaseModel, Field
 
 from openai import OpenAI
 
+from .auth import get_current_user_id
 from ..services import (
     PineconeClient,
     Namespace,
@@ -42,6 +44,8 @@ from ..data.demo_cases import (
     save_uploaded_case,
     delete_uploaded_case,
     get_case_source_by_id,
+    hide_case,
+    is_case_hidden,
     toggle_favorite,
     is_favorite,
     get_favorite_cases,
@@ -369,9 +373,18 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     Uses PyPDF2 or pdfplumber if available.
     """
     try:
-        # Try PyPDF2 first
-        import PyPDF2
-        reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
+        from PyPDF2 import PdfReader
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        text_parts = []
+        for page in reader.pages:
+            text_parts.append(page.extract_text() or "")
+        return "\n\n".join(text_parts)
+    except ImportError:
+        pass
+    
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
         text_parts = []
         for page in reader.pages:
             text_parts.append(page.extract_text() or "")
@@ -428,62 +441,120 @@ def parse_pdf_to_case(pdf_bytes_or_text, case_name: str) -> Dict[str, Any]:
     else:
         pdf_text = pdf_bytes_or_text
 
-    # Fallback: GPT-4 parsing for non-AMTA format PDFs
+    # Fallback: LLM parsing for non-AMTA format PDFs
     try:
         client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-        prompt = f"""Analyze this mock trial case document and extract structured data.
+        prompt = f"""Analyze this mock trial case document and extract ALL structured data.
 
 Document text:
-{pdf_text[:60000]}
+{pdf_text[:120000]}
 
-Extract and return a JSON object with:
+Extract and return a JSON object with EVERY field below. If a section is not found in the document, use an empty list or empty string.
+
 {{
-    "name": "Case name from document",
+    "name": "Case name/title from document",
     "charge": "The criminal charge or civil claim",
+    "charge_detail": "Full text of the indictment or complaint if present",
     "case_type": "criminal or civil",
     "synopsis": "Brief 2-3 sentence summary of the case",
+    "plaintiff": "Name of prosecution/plaintiff party",
+    "defendant": "Name of defendant",
     "facts": [
-        {{"id": "fact_1", "fact_type": "evidence|stipulation|background|legal_standard", "content": "...", "source": "page X"}}
+        {{"id": "fact_1", "fact_type": "evidence|stipulation|background|legal_standard", "content": "...", "source": "document"}}
     ],
     "witnesses": [
-        {{"id": "witness_1", "name": "...", "called_by": "plaintiff|defense", "affidavit": "FULL AND COMPLETE affidavit text — do NOT summarize, include EVERY paragraph verbatim", "role_description": "...", "key_facts": ["fact1", "fact2"]}}
+        {{
+            "id": "witness_1",
+            "name": "Full name",
+            "called_by": "prosecution|defense|either",
+            "affidavit": "FULL AND COMPLETE affidavit/statement text — do NOT summarize, include EVERY paragraph verbatim",
+            "role_description": "Brief role description (e.g. 'Investigating officer', 'Eyewitness')",
+            "key_facts": ["fact1", "fact2"]
+        }}
     ],
     "exhibits": [
-        {{"id": "exhibit_1", "exhibit_number": "1", "title": "...", "description": "...", "content_type": "document|photo|diagram", "pre_admitted": false}}
+        {{"id": "exhibit_1", "exhibit_number": "1", "title": "...", "description": "...", "content": "Full text content of the exhibit if available", "content_type": "document|photo|diagram|report", "pre_admitted": false}}
     ],
     "stipulations": [
-        {{"id": "stip_1", "content": "..."}}
+        {{"id": "stip_1", "content": "Full text of the stipulation"}}
     ],
     "legal_standards": [
-        {{"id": "law_1", "content": "..."}}
-    ]
+        {{"id": "law_1", "content": "Full text of the law, statute, or legal standard"}}
+    ],
+    "jury_instructions": [
+        {{"id": "ji_1", "number": 1, "title": "Instruction title if any", "content": "Full text of the jury instruction"}}
+    ],
+    "relevant_law": {{
+        "statutes": [{{"title": "Statute name/number", "content": "Full text"}}],
+        "cases": [{{"title": "Case citation", "content": "Holding or summary"}}]
+    }},
+    "motions_in_limine": [
+        {{"id": "mil_1", "title": "Motion title", "ruling": "granted|denied|partially_granted", "content": "Full text of the motion and ruling"}}
+    ],
+    "special_instructions": [
+        {{"number": 1, "title": "Rule title", "content": "Full text of the special instruction or rule"}}
+    ],
+    "witness_calling_restrictions": {{
+        "prosecution_only": ["Witness names callable only by prosecution/plaintiff"],
+        "defense_only": ["Witness names callable only by defense"],
+        "either_side": ["Witness names callable by either side"]
+    }}
 }}
 
-CRITICAL: For each witness, the "affidavit" field MUST contain the COMPLETE, VERBATIM text of their affidavit or sworn statement. Do NOT summarize or truncate. Include every paragraph, every detail, every specific fact.
+CRITICAL RULES:
+1. For each witness, the "affidavit" field MUST contain the COMPLETE, VERBATIM text of their sworn statement. Do NOT summarize or truncate.
+2. Extract ALL witnesses, exhibits, stipulations, legal standards, and jury instructions found in the document.
+3. If the document contains rules of evidence or competition rules, put them in "special_instructions".
+4. If witness calling restrictions are specified, populate "witness_calling_restrictions".
+5. You MUST find and extract every witness in the document. Look for sworn statements, affidavits, depositions, or any section identifying witnesses.
+6. WITNESS CALLING SIDES: Pay very careful attention to which side can call each witness. Look for explicit labels like "Prosecution Witness", "Defense Witness", "May be called by either party", witness lists organized by side, or calling restriction tables. The "called_by" field for each witness MUST match the document exactly. If a witness can be called by either side, set called_by to "either". Do NOT guess — only use "prosecution" or "defense" if the document explicitly assigns the witness to that side.
 
 Return ONLY valid JSON, no explanation."""
 
         response = client.chat.completions.create(
-            model="gpt-4.1",
+            model="gpt-4.1-mini",
             messages=[
-                {"role": "system", "content": "You are a legal document parser. Extract structured mock trial case data. PRESERVE full witness affidavit text verbatim — do not summarize. Return only valid JSON."},
+                {"role": "system", "content": "You are a legal document parser specializing in mock trial case materials. Extract ALL structured data from the document. PRESERVE full witness affidavit text verbatim — do not summarize. Return only valid JSON."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            max_tokens=16000,
+            max_tokens=32000,
         )
 
-        return json.loads(response.choices[0].message.content)
-    except Exception:
-        return {
-            "name": case_name,
-            "facts": [{"id": "fact_raw", "fact_type": "background", "content": pdf_text[:5000], "source": "raw_extract"}],
-            "witnesses": [],
-            "exhibits": [],
-            "stipulations": [],
-            "legal_standards": []
-        }
+        parsed = json.loads(response.choices[0].message.content)
+
+        # Map parties fields to top-level plaintiff/defendant if present
+        parties = parsed.pop("parties", {})
+        if not parsed.get("plaintiff") and parties.get("prosecution"):
+            parsed["plaintiff"] = parties["prosecution"]
+        if not parsed.get("defendant") and parties.get("defense"):
+            parsed["defendant"] = parties["defense"]
+
+        parsed["witness_count"] = len(parsed.get("witnesses", []))
+        parsed["exhibit_count"] = len(parsed.get("exhibits", []))
+
+        logger.info(
+            f"GPT PDF parse complete: {parsed.get('name', case_name)} — "
+            f"{parsed['witness_count']} witnesses, {parsed['exhibit_count']} exhibits, "
+            f"{len(parsed.get('facts', []))} facts, {len(parsed.get('stipulations', []))} stipulations, "
+            f"{len(parsed.get('legal_standards', []))} legal standards"
+        )
+
+        if parsed["witness_count"] == 0:
+            logger.warning(
+                f"GPT parsing returned 0 witnesses for '{case_name}'. "
+                f"Document may have an unusual format or text extraction may have failed. "
+                f"Text length: {len(pdf_text)} chars"
+            )
+
+        return parsed
+    except Exception as e:
+        logger.error(f"GPT PDF parsing failed for '{case_name}': {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse case PDF. The AI could not extract structured data from this document. Error: {str(e)}"
+        )
 
 
 # =============================================================================
@@ -689,13 +760,20 @@ async def upload_case_json(
             detail="File must be a JSON file"
         )
     
+    MAX_JSON_SIZE = 10 * 1024 * 1024  # 10 MB
     try:
         content = await file.read()
+        if len(content) > MAX_JSON_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {MAX_JSON_SIZE // (1024*1024)} MB"
+            )
         data = json.loads(content.decode("utf-8"))
     except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON: {e}")
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid JSON: {str(e)}"
+            detail="Invalid JSON"
         )
     
     # Generate case ID
@@ -706,7 +784,7 @@ async def upload_case_json(
     db_case = case_repo.get_case(case_id)
     
     if case_id in _cases or db_case:
-        existing_name = _cases[case_id].name if case_id in _cases else db_case.title
+        existing_name = _cases[case_id].name if case_id in _cases else (db_case.get("title", "Existing Case") if isinstance(db_case, dict) else getattr(db_case, "title", "Existing Case"))
         return UploadCaseResponse(
             case_id=case_id,
             name=existing_name,
@@ -812,7 +890,13 @@ async def upload_case_pdf(
             detail="File must be a PDF file"
         )
     
+    MAX_PDF_SIZE = 50 * 1024 * 1024  # 50 MB
     content = await file.read()
+    if len(content) > MAX_PDF_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_PDF_SIZE // (1024*1024)} MB"
+        )
     
     # Generate case ID from content hash
     case_id = hashlib.md5(content).hexdigest()[:12]
@@ -822,7 +906,7 @@ async def upload_case_pdf(
     db_case = case_repo.get_case(case_id)
     
     if case_id in _cases or db_case:
-        existing_name = _cases[case_id].name if case_id in _cases else db_case.title
+        existing_name = _cases[case_id].name if case_id in _cases else (db_case.get("title", "Existing Case") if isinstance(db_case, dict) else getattr(db_case, "title", "Existing Case"))
         return UploadCaseResponse(
             case_id=case_id,
             name=existing_name,
@@ -852,9 +936,10 @@ async def upload_case_pdf(
     try:
         parsed_data = parse_pdf_to_case(content, name)
     except Exception as e:
+        logger.error(f"Failed to parse PDF content: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to parse PDF content: {str(e)}"
+            detail="Failed to parse PDF"
         )
     
     # Create in-memory case
@@ -890,9 +975,36 @@ async def upload_case_pdf(
     
     _cases[case_id] = case
     
-    # Persist to Supabase
+    # Persist to uploaded_cases table (reliable path — stores witnesses inline as JSONB)
+    uploaded_case_data = {
+        "id": case_id,
+        "title": case.name,
+        "description": parsed_data.get("synopsis", f"Parsed from PDF: {file.filename}")[:500],
+        "case_type": case.case_type,
+        "source": "PDF Upload",
+        "year": 2024,
+        "witnesses": case.witnesses,
+        "exhibits": case.exhibits,
+        "facts": case.facts,
+        "stipulations": case.stipulations,
+        "legal_standards": case.legal_standards,
+        "synopsis": case.synopsis,
+        "charge": case.charge,
+        "plaintiff": case.plaintiff,
+        "defendant": case.defendant,
+        "sections": {"summary": {"content": "", "filename": file.filename}},
+    }
+    for field in ("jury_instructions", "relevant_law", "motions_in_limine",
+                  "special_instructions", "witness_calling_restrictions",
+                  "charge_detail", "indictment"):
+        if parsed_data.get(field):
+            uploaded_case_data[field] = parsed_data[field]
+    save_uploaded_case(case_id, uploaded_case_data)
+    logger.info(f"Case {case_id} saved to uploaded_cases (w={case.witness_count}, e={case.exhibit_count}, f={case.fact_count})")
+
+    # Also persist to cases table (secondary)
     try:
-        db_case = case_repo.create_case(
+        case_repo.create_case(
             case_id=case_id,
             title=case.name,
             description=parsed_data.get("synopsis", f"Parsed from PDF: {file.filename}")[:500],
@@ -900,25 +1012,9 @@ async def upload_case_pdf(
             facts=case.facts,
             exhibits=case.exhibits,
         )
-        
-        # Persist witnesses
-        for witness in case.witnesses:
-            case_repo.add_witness(
-                case_id=case_id,
-                witness_id=witness.get("id"),
-                name=witness.get("name", "Unknown"),
-                called_by=witness.get("called_by", "unknown"),
-                affidavit=witness.get("affidavit", ""),
-                witness_type=witness.get("document_type", "fact_witness"),
-                default_persona={
-                    "role_description": witness.get("role_description", ""),
-                    "key_facts": witness.get("key_facts", []),
-                }
-            )
-        
-        logger.info(f"Case {case_id} (PDF) persisted to database")
+        logger.info(f"Case {case_id} (PDF) persisted to cases table")
     except Exception as e:
-        logger.warning(f"Failed to persist PDF case to database: {e}")
+        logger.warning(f"Failed to persist to cases table: {e}")
     
     # Initialize processing status
     _processing_status[case_id] = ProcessingStatus(case_id)
@@ -1002,19 +1098,28 @@ async def list_cases(include_demo: bool = True):
         db_cases = case_repo.get_all_cases()
         if db_cases:
             for c in db_cases:
-                witnesses = case_repo.get_witnesses(c.id)
-                cache_case = _cases.get(c.id)
+                cid = c.get("id", "") if isinstance(c, dict) else getattr(c, "id", "")
+                if not cid or is_case_hidden(cid):
+                    continue
+                if any(r.case_id == cid for r in results):
+                    continue
+                witnesses = case_repo.get_witnesses(cid)
+                cache_case = _cases.get(cid)
+                c_get = (lambda k, d="": c.get(k, d)) if isinstance(c, dict) else (lambda k, d="": getattr(c, k, d))
+                created = c_get("created_at", "")
+                if hasattr(created, "isoformat"):
+                    created = created.isoformat()
                 results.append(
                     CaseMetadataResponse(
-                        case_id=c.id,
-                        name=c.title,
-                        source_type=c.case_type or "unknown",
-                        source_filename=c.description or "",
-                        created_at=c.created_at.isoformat(),
-                        processed=c.embedding_status == "completed",
-                        fact_count=len(c.facts) if c.facts else 0,
+                        case_id=cid,
+                        name=c_get("title", "Untitled"),
+                        source_type=c_get("case_type", "unknown") or "unknown",
+                        source_filename=c_get("description", ""),
+                        created_at=str(created) if created else "2024-01-01T00:00:00",
+                        processed=c_get("embedding_status") == "completed",
+                        fact_count=len(c_get("facts") or []),
                         witness_count=len(witnesses),
-                        exhibit_count=len(c.exhibits) if c.exhibits else 0,
+                        exhibit_count=len(c_get("exhibits") or []),
                         embedding_count=cache_case.embedding_count if cache_case else 0
                     )
                 )
@@ -1023,6 +1128,8 @@ async def list_cases(include_demo: bool = True):
     
     # Also add in-memory uploaded cases
     for case in _cases.values():
+        if is_case_hidden(case.case_id):
+            continue
         # Skip if already added from DB
         if any(r.case_id == case.case_id for r in results):
             continue
@@ -1184,12 +1291,17 @@ async def delete_case(
 ):
     """
     Delete a case and optionally its embeddings.
+    Handles both user-uploaded cases and demo/source cases with uploaded materials.
     """
-    # Check both in-memory cache and database
     case_repo = CaseRepository()
     db_case = case_repo.get_case(case_id)
+    uploaded_case = get_uploaded_case(case_id)
+    source_case = get_case_source_by_id(case_id)
     
-    if case_id not in _cases and not db_case:
+    found_in_memory = case_id in _cases
+    found_anywhere = found_in_memory or db_case or uploaded_case or source_case
+
+    if not found_anywhere:
         raise HTTPException(status_code=404, detail="Case not found")
     
     case = _cases.get(case_id)
@@ -1199,13 +1311,11 @@ async def delete_case(
         try:
             pinecone = get_pinecone()
             
-            # Delete case facts
             pinecone.delete(
                 namespace=Namespace.CASE_FACTS,
                 filter={"case_id": case_id}
             )
             
-            # Delete witness memories
             for witness in witnesses:
                 witness_namespace = get_witness_namespace(witness.get("id", ""))
                 pinecone.delete_namespace(witness_namespace)
@@ -1213,18 +1323,23 @@ async def delete_case(
         except Exception as e:
             logger.warning(f"Failed to delete Pinecone embeddings: {e}")
     
-    # Delete from Supabase
-    try:
-        case_repo.delete_case(case_id)
-        logger.info(f"Case {case_id} deleted from database")
-    except Exception as e:
-        logger.warning(f"Failed to delete case from database: {e}")
+    if db_case:
+        try:
+            case_repo.delete_case(case_id)
+            logger.info(f"Case {case_id} deleted from database")
+        except Exception as e:
+            logger.warning(f"Failed to delete case from database: {e}")
     
-    # Remove from in-memory storage
-    if case_id in _cases:
+    if uploaded_case:
+        delete_uploaded_case(case_id)
+        logger.info(f"Uploaded case data for {case_id} deleted")
+    
+    if found_in_memory:
         del _cases[case_id]
     if case_id in _processing_status:
         del _processing_status[case_id]
+    
+    hide_case(case_id)
     
     return {
         "case_id": case_id,
@@ -1459,9 +1574,22 @@ async def upload_case_file(
     # Create directory if it doesn't exist
     case_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save file
-    file_path = case_dir / file.filename
+    # Read file with size limit (50 MB)
+    MAX_FILE_SIZE = 50 * 1024 * 1024
     content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)} MB"
+        )
+
+    # Sanitize filename to prevent path traversal
+    safe_filename = Path(file.filename).name
+    if not safe_filename or safe_filename.startswith('.'):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    file_path = case_dir / safe_filename
+    if not file_path.resolve().is_relative_to(case_dir.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     
     with open(file_path, "wb") as f:
         f.write(content)
@@ -1634,7 +1762,8 @@ async def upload_section_content(
             try:
                 section_content = extract_text_from_pdf(file_content)
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to parse PDF: {e}")
+                logger.error(f"Failed to parse PDF: {e}")
+                raise HTTPException(status_code=500, detail="Failed to parse PDF")
         else:
             # Assume text file
             try:
@@ -1652,6 +1781,87 @@ async def upload_section_content(
         "storage_path": storage_result["path"] if storage_result and storage_result.get("success") else None,
     }
     
+    # For "summary" section PDFs, run full GPT parsing to extract all structured data
+    if section_id == "summary" and section_content and len(section_content) > 100:
+        case_title = title or case_data.get("title", "Uploaded Case")
+        try:
+            logger.info(f"Running full GPT parse on summary section for case {case_id} ({len(section_content)} chars)")
+            parsed_data = await asyncio.to_thread(parse_pdf_to_case, section_content, case_title)
+            
+            # Merge parsed data into case_data
+            if parsed_data.get("witnesses"):
+                case_data["witnesses"] = parsed_data["witnesses"]
+            if parsed_data.get("exhibits"):
+                case_data["exhibits"] = parsed_data["exhibits"]
+            if parsed_data.get("facts"):
+                case_data["facts"] = parsed_data["facts"]
+            if parsed_data.get("stipulations"):
+                case_data["stipulations"] = parsed_data["stipulations"]
+            if parsed_data.get("legal_standards"):
+                case_data["legal_standards"] = parsed_data["legal_standards"]
+            if parsed_data.get("synopsis"):
+                case_data["synopsis"] = parsed_data["synopsis"]
+            if parsed_data.get("case_type") and parsed_data["case_type"] != "unknown":
+                case_data["case_type"] = parsed_data["case_type"]
+            if parsed_data.get("charge"):
+                case_data["charge"] = parsed_data["charge"]
+            if parsed_data.get("plaintiff"):
+                case_data["plaintiff"] = parsed_data["plaintiff"]
+            if parsed_data.get("defendant"):
+                case_data["defendant"] = parsed_data["defendant"]
+            if parsed_data.get("name") and not title:
+                case_data["title"] = parsed_data["name"]
+            
+            # Copy over additional fields
+            for field in ("jury_instructions", "relevant_law", "motions_in_limine", 
+                         "special_instructions", "witness_calling_restrictions",
+                         "charge_detail", "indictment"):
+                if parsed_data.get(field):
+                    case_data[field] = parsed_data[field]
+            
+            save_uploaded_case(case_id, case_data)
+            logger.info(
+                f"Summary parse complete for {case_id}: "
+                f"{len(case_data.get('witnesses', []))} witnesses, "
+                f"{len(case_data.get('exhibits', []))} exhibits, "
+                f"{len(case_data.get('facts', []))} facts"
+            )
+            
+            # Also create CaseData in memory for trial use
+            try:
+                case = CaseData(
+                    case_id=case_id,
+                    name=case_data.get("title", case_title),
+                    source_type="pdf_upload",
+                    source_filename=file.filename if file else "upload",
+                )
+                case.facts = case_data.get("facts", [])
+                case.witnesses = case_data.get("witnesses", [])
+                case.exhibits = case_data.get("exhibits", [])
+                case.stipulations = case_data.get("stipulations", [])
+                case.legal_standards = case_data.get("legal_standards", [])
+                case.special_instructions = case_data.get("special_instructions", [])
+                case.jury_instructions = case_data.get("jury_instructions", [])
+                case.synopsis = case_data.get("synopsis", "")
+                case.case_type = case_data.get("case_type", "unknown")
+                case.charge = case_data.get("charge", "")
+                case.plaintiff = case_data.get("plaintiff", "")
+                case.defendant = case_data.get("defendant", "")
+                case.fact_count = len(case.facts)
+                case.witness_count = len(case.witnesses)
+                case.exhibit_count = len(case.exhibits)
+                case.processed = True
+                _cases[case_id] = case
+                
+                background_tasks.add_task(process_case_embeddings, case_id)
+            except Exception as emb_err:
+                logger.warning(f"Could not create in-memory case for {case_id}: {emb_err}")
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Failed to parse summary PDF for case {case_id}: {e}")
+    
     # Parse section into structured data based on section type
     if section_id in ("witnesses_plaintiff", "witnesses_defense", "witnesses_either"):
         called_by = {
@@ -1665,7 +1875,7 @@ async def upload_section_content(
             for pw in parsed_witnesses:
                 if pw["id"] not in existing_ids:
                     case_data.setdefault("witnesses", []).append(pw)
-            _uploaded_cases[case_id] = case_data
+            save_uploaded_case(case_id, case_data)
             logger.info(f"Parsed {len(parsed_witnesses)} witnesses from section {section_id}")
     elif section_id == "exhibits":
         pass
@@ -1695,6 +1905,9 @@ async def upload_section_content(
         "section_id": section_id,
         "content_length": len(section_content),
         "sections_complete": len(case_data["sections"]),
+        "witness_count": len(case_data.get("witnesses", [])),
+        "exhibit_count": len(case_data.get("exhibits", [])),
+        "fact_count": len(case_data.get("facts", [])),
         "message": f"Section '{section_id}' uploaded successfully",
     }
     
@@ -1782,6 +1995,110 @@ async def delete_section_content(case_id: str, section_id: str):
     }
 
 
+@router.post("/{case_id}/reparse")
+async def reparse_case(case_id: str, background_tasks: BackgroundTasks):
+    """
+    Re-parse a previously uploaded case using GPT to extract structured data.
+    Useful when the original upload didn't run AI parsing.
+    """
+    case_data = get_uploaded_case(case_id)
+    if not case_data:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    # Find raw text from sections
+    sections = case_data.get("sections", {})
+    raw_text = ""
+    for sec_id in ("summary", "witnesses_plaintiff", "witnesses_defense", "exhibits",
+                    "stipulations", "jury_instructions", "rules"):
+        sec = sections.get(sec_id, {})
+        if isinstance(sec, dict) and sec.get("content"):
+            raw_text += "\n\n" + sec["content"]
+        elif isinstance(sec, str) and sec:
+            raw_text += "\n\n" + sec
+
+    if len(raw_text.strip()) < 100:
+        raise HTTPException(status_code=400, detail="Not enough text content to re-parse")
+
+    case_title = case_data.get("title", "Uploaded Case")
+    logger.info(f"Re-parsing case {case_id} ({len(raw_text)} chars)")
+
+    try:
+        parsed_data = await asyncio.to_thread(parse_pdf_to_case, raw_text, case_title)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Re-parse failed for case {case_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"AI parsing failed: {e}")
+
+    if parsed_data.get("witnesses"):
+        case_data["witnesses"] = parsed_data["witnesses"]
+    if parsed_data.get("exhibits"):
+        case_data["exhibits"] = parsed_data["exhibits"]
+    if parsed_data.get("facts"):
+        case_data["facts"] = parsed_data["facts"]
+    if parsed_data.get("stipulations"):
+        case_data["stipulations"] = parsed_data["stipulations"]
+    if parsed_data.get("legal_standards"):
+        case_data["legal_standards"] = parsed_data["legal_standards"]
+    if parsed_data.get("synopsis"):
+        case_data["synopsis"] = parsed_data["synopsis"]
+    if parsed_data.get("case_type") and parsed_data["case_type"] != "unknown":
+        case_data["case_type"] = parsed_data["case_type"]
+    if parsed_data.get("charge"):
+        case_data["charge"] = parsed_data["charge"]
+    if parsed_data.get("plaintiff"):
+        case_data["plaintiff"] = parsed_data["plaintiff"]
+    if parsed_data.get("defendant"):
+        case_data["defendant"] = parsed_data["defendant"]
+    if parsed_data.get("name") and not case_data.get("title"):
+        case_data["title"] = parsed_data["name"]
+
+    for field in ("jury_instructions", "relevant_law", "motions_in_limine",
+                  "special_instructions", "witness_calling_restrictions",
+                  "charge_detail", "indictment"):
+        if parsed_data.get(field):
+            case_data[field] = parsed_data[field]
+
+    save_uploaded_case(case_id, case_data)
+
+    try:
+        case = CaseData(
+            case_id=case_id,
+            name=case_data.get("title", case_title),
+            source_type="pdf_reparse",
+            source_filename="reparse",
+        )
+        case.facts = case_data.get("facts", [])
+        case.witnesses = case_data.get("witnesses", [])
+        case.exhibits = case_data.get("exhibits", [])
+        case.stipulations = case_data.get("stipulations", [])
+        case.legal_standards = case_data.get("legal_standards", [])
+        case.special_instructions = case_data.get("special_instructions", [])
+        case.jury_instructions = case_data.get("jury_instructions", [])
+        case.synopsis = case_data.get("synopsis", "")
+        case.case_type = case_data.get("case_type", "unknown")
+        case.charge = case_data.get("charge", "")
+        case.plaintiff = case_data.get("plaintiff", "")
+        case.defendant = case_data.get("defendant", "")
+        case.fact_count = len(case.facts)
+        case.witness_count = len(case.witnesses)
+        case.exhibit_count = len(case.exhibits)
+        case.processed = True
+        _cases[case_id] = case
+        background_tasks.add_task(process_case_embeddings, case_id)
+    except Exception as emb_err:
+        logger.warning(f"Could not create in-memory case for {case_id}: {emb_err}")
+
+    return {
+        "case_id": case_id,
+        "message": "Re-parse complete",
+        "witness_count": len(case_data.get("witnesses", [])),
+        "exhibit_count": len(case_data.get("exhibits", [])),
+        "fact_count": len(case_data.get("facts", [])),
+        "stipulation_count": len(case_data.get("stipulations", [])),
+    }
+
+
 # =============================================================================
 # STORAGE MANAGEMENT ENDPOINTS
 # =============================================================================
@@ -1808,7 +2125,7 @@ async def get_case_storage_info(case_id: str):
         return summary
     except Exception as e:
         logger.error(f"Failed to get storage info: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get storage info: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get storage info")
 
 
 @router.get("/{case_id}/storage/files")
@@ -1839,7 +2156,7 @@ async def list_case_files(case_id: str, section: str = None):
         }
     except Exception as e:
         logger.error(f"Failed to list files: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list files: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list files")
 
 
 @router.get("/{case_id}/storage/files/{section}/{filename}/url")
@@ -1879,7 +2196,7 @@ async def get_file_url(
         raise
     except Exception as e:
         logger.error(f"Failed to get file URL: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get file URL: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get file URL")
 
 
 @router.delete("/{case_id}/storage/files/{section}/{filename}")
@@ -1916,7 +2233,7 @@ async def delete_storage_file(case_id: str, section: str, filename: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete file: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete file")
 
 
 @router.delete("/{case_id}/storage")
@@ -1944,7 +2261,7 @@ async def delete_all_case_storage(case_id: str):
         }
     except Exception as e:
         logger.error(f"Failed to delete case storage: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete case storage: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete case storage")
 
 
 # =============================================================================
@@ -2042,9 +2359,10 @@ async def fetch_case_from_source(
     try:
         parsed_data = parse_pdf_to_case(pdf_content, case_name)
     except Exception as e:
+        logger.error(f"Failed to parse PDF content: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to parse PDF content: {str(e)}"
+            detail="Failed to parse PDF"
         )
     
     # Create case data
@@ -2056,7 +2374,7 @@ async def fetch_case_from_source(
         "year": source_case["year"] if source_case else 2024,
         "sections": {
             "summary": {
-                "content": pdf_text[:5000],  # First part as summary
+                "content": parsed_data.get("synopsis", "")[:5000],
                 "filename": f"{case_id}.pdf",
                 "uploaded_at": datetime.utcnow().isoformat(),
             }
@@ -2383,7 +2701,9 @@ async def delete_case_materials(case_id: str):
 # =============================================================================
 
 @router.post("/admin/sync-storage")
-async def sync_storage_to_database():
+async def sync_storage_to_database(
+    user_id: str = Depends(get_current_user_id),
+):
     """
     Scan Supabase Storage for existing files and rebuild uploaded_cases
     records in the database for any cases that have files but no record.

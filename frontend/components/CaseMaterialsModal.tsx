@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ChevronDownIcon } from "@/components/ui/icons";
+import { apiFetch, API_BASE } from "@/lib/api";
 
 // =============================================================================
 // SVG ICONS
@@ -260,13 +261,11 @@ interface CaseMaterialsModalProps {
 // API
 // =============================================================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 async function fetchCaseMaterials(sessionId: string): Promise<CaseMaterials> {
   const url = `${API_BASE}/api/session/${sessionId}/case-materials`;
   console.log("[CaseMaterialsModal] Fetching case materials from:", url);
   
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) {
     const text = await response.text();
     console.error("[CaseMaterialsModal] Error fetching materials:", response.status, text);
@@ -282,7 +281,7 @@ async function fetchCaseFiles(caseId: string): Promise<CaseFile[]> {
   const url = `${API_BASE}/api/case/${caseId}/storage/files`;
   console.log("[CaseMaterialsModal] Fetching case files from:", url);
   
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) {
     console.warn("[CaseMaterialsModal] No case files found");
     return [];
@@ -296,7 +295,7 @@ async function fetchCaseFiles(caseId: string): Promise<CaseFile[]> {
   for (const f of storageFiles) {
     // Get a signed URL for each file
     try {
-      const urlRes = await fetch(
+      const urlRes = await apiFetch(
         `${API_BASE}/api/case/${caseId}/storage/files/${f.section}/${f.name}/url`
       );
       if (urlRes.ok) {
@@ -1074,7 +1073,7 @@ function FileViewerModal({
   onClose: () => void;
 }) {
   // Signed URLs from Supabase Storage are already absolute
-  const fileUrl = file.url.startsWith("http") ? file.url : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${file.url}`;
+  const fileUrl = file.url.startsWith("http") ? file.url : `${API_BASE}${file.url}`;
   const [textContent, setTextContent] = useState<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(false);
   const [textError, setTextError] = useState<string | null>(null);
@@ -1377,10 +1376,10 @@ function WitnessCard({
       >
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            witness.called_by === "plaintiff" ? "bg-blue-500/20" : "bg-emerald-500/20"
+            witness.called_by === "plaintiff" ? "bg-blue-500/20" : witness.called_by === "either" ? "bg-amber-500/20" : "bg-emerald-500/20"
           }`}>
             <UserIcon className={`w-5 h-5 ${
-              witness.called_by === "plaintiff" ? "text-blue-400" : "text-emerald-400"
+              witness.called_by === "plaintiff" ? "text-blue-400" : witness.called_by === "either" ? "text-amber-400" : "text-emerald-400"
             }`} />
           </div>
           <div className="text-left">

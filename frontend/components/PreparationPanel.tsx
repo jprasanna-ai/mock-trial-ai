@@ -7,7 +7,7 @@
  * - Witness Outlines
  * - Objection Playbook
  * - Cross-Exam Traps
- * - AMTA Rules
+ * - Practice Drills
  * 
  * Also includes:
  * - Coach AI chat
@@ -20,6 +20,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { VoicePracticeInput, SpeechAnalysis } from "./VoicePracticeInput";
 import { ChevronDownIcon } from "@/components/ui/icons";
+import { apiFetch, API_BASE } from "@/lib/api";
 
 // =============================================================================
 // SPEECH RECOGNITION TYPE DECLARATIONS
@@ -109,7 +110,6 @@ interface PrepMaterials {
   witness_outlines: WitnessOutline[];
   objection_playbook: ObjectionPlaybook | null;
   cross_exam_traps: CrossExamTrap[];
-  amta_rules: string[];
   generation_status?: Record<string, string>;
 }
 
@@ -131,7 +131,7 @@ interface DrillResponse {
   sample_responses: string[];
 }
 
-type PrepTab = "brief" | "theory" | "witnesses" | "objections" | "traps" | "openings" | "rules" | "coach" | "drill" | "practice" | "agents";
+type PrepTab = "brief" | "theory" | "witnesses" | "objections" | "traps" | "openings" | "drill" | "agents" | "coach";
 
 interface PreparationPanelProps {
   sessionId: string;
@@ -241,12 +241,12 @@ const GavelIcon = ({ className = "" }: { className?: string }) => (
 // API
 // =============================================================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 interface CaseWitness {
   id: string;
   name: string;
   called_by: string;
+  assigned_side?: string;
+  is_reassignable?: boolean;
   role_description: string;
 }
 
@@ -266,7 +266,7 @@ interface MaterialsResponse {
 
 async function fetchPrepMaterials(sessionId: string): Promise<MaterialsResponse> {
   const url = `${API_BASE}/api/prep/${sessionId}/materials`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || `Failed to fetch materials: ${response.status}`);
@@ -284,7 +284,7 @@ async function triggerGeneration(sessionId: string, section?: string, force = fa
   const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
   
   try {
-    const response = await fetch(`${API_BASE}/api/prep/${sessionId}/generate?${params.toString()}`, {
+    const response = await apiFetch(`${API_BASE}/api/prep/${sessionId}/generate?${params.toString()}`, {
       method: "POST",
       signal: controller.signal,
     });
@@ -309,7 +309,7 @@ async function updateMaterial(
   content: string, 
   witnessId?: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE}/api/prep/${sessionId}/materials`, {
+  const response = await apiFetch(`${API_BASE}/api/prep/${sessionId}/materials`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ 
@@ -326,7 +326,7 @@ async function updateMaterial(
 }
 
 async function sendCoachMessage(sessionId: string, message: string): Promise<{ response: string; suggestions: string[] }> {
-  const response = await fetch(`${API_BASE}/api/prep/${sessionId}/coach`, {
+  const response = await apiFetch(`${API_BASE}/api/prep/${sessionId}/coach`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
@@ -337,8 +337,25 @@ async function sendCoachMessage(sessionId: string, message: string): Promise<{ r
   return response.json();
 }
 
+async function reassignWitness(
+  sessionId: string,
+  witnessId: string,
+  newSide: "plaintiff" | "defense"
+): Promise<{ status: string; message: string }> {
+  const response = await apiFetch(`${API_BASE}/api/session/${sessionId}/reassign-witness`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ witness_id: witnessId, new_side: newSide }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to reassign witness");
+  }
+  return response.json();
+}
+
 async function fetchOpeningStatements(sessionId: string): Promise<OpeningStatementsResponse> {
-  const response = await fetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
+  const response = await apiFetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || `Failed to fetch opening statements: ${response.status}`);
@@ -372,7 +389,7 @@ async function regenerateOpenings(sessionId: string, side?: string, force = fals
 }
 
 async function startDrill(sessionId: string, drillType: string, witnessId?: string): Promise<DrillResponse> {
-  const response = await fetch(`${API_BASE}/api/prep/${sessionId}/drill`, {
+  const response = await apiFetch(`${API_BASE}/api/prep/${sessionId}/drill`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ drill_type: drillType, witness_id: witnessId }),
@@ -679,6 +696,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
 
   const [caseWitnesses, setCaseWitnesses] = useState<CaseWitness[]>([]);
   const [caseExhibits, setCaseExhibits] = useState<CaseExhibit[]>([]);
+  const [reassigningWitness, setReassigningWitness] = useState<string | null>(null);
 
   // Load materials on mount and start generation
   useEffect(() => {
@@ -773,8 +791,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
       const hasMainContent = !!(
         response.materials.case_brief &&
         response.materials.theory_plaintiff &&
-        response.materials.theory_defense &&
-        response.materials.witness_outlines?.length > 0
+        response.materials.theory_defense
       );
       if ((response.is_complete || hasMainContent) && !forceRegenerate) {
         setIsGenerating(false);
@@ -829,6 +846,29 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
     }
   };
 
+  const handleReassignWitness = async (witnessId: string, newSide: "plaintiff" | "defense") => {
+    setReassigningWitness(witnessId);
+    try {
+      await reassignWitness(sessionId, witnessId, newSide);
+      // Update local state
+      setCaseWitnesses((prev) =>
+        prev.map((w) =>
+          w.id === witnessId ? { ...w, assigned_side: newSide } : w
+        )
+      );
+      // Refresh materials to get updated outlines
+      const updated = await loadMaterials();
+      setMaterials(updated.materials);
+      // Refresh agent preps too
+      fetchAgentPreps();
+    } catch (err) {
+      console.error("Failed to reassign witness:", err);
+      setError(err instanceof Error ? err.message : "Failed to reassign witness");
+    } finally {
+      setReassigningWitness(null);
+    }
+  };
+
   const handleRegenerateOpening = async (side?: string) => {
     setIsGeneratingOpenings(true);
     setOpeningsError(null);
@@ -862,7 +902,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
   const fetchAgentPreps = useCallback(async () => {
     setAgentPrepLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/prep/${sessionId}/agent-prep`);
+      const res = await apiFetch(`${API_BASE}/api/prep/${sessionId}/agent-prep`);
       if (res.ok) {
         const data = await res.json();
         setAgentPreps(data.agents || {});
@@ -877,7 +917,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
   const handleGenerateAgentPreps = useCallback(async () => {
     setAgentPrepLoading(true);
     try {
-      await fetch(`${API_BASE}/api/prep/${sessionId}/generate-agent-prep`, { method: "POST" });
+      await apiFetch(`${API_BASE}/api/prep/${sessionId}/generate-agent-prep`, { method: "POST" });
       await fetchAgentPreps();
     } catch (err) {
       console.error("Failed to generate agent preps:", err);
@@ -889,7 +929,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
   const handleRegenerateAgentPrep = useCallback(async (agentKey: string) => {
     setRegeneratingAgent(agentKey);
     try {
-      await fetch(`${API_BASE}/api/prep/${sessionId}/regenerate-agent-prep/${agentKey}`, { method: "POST" });
+      await apiFetch(`${API_BASE}/api/prep/${sessionId}/regenerate-agent-prep/${agentKey}`, { method: "POST" });
       await fetchAgentPreps();
     } catch (err) {
       console.error(`Failed to regenerate agent prep for ${agentKey}:`, err);
@@ -989,10 +1029,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
     { id: "objections", label: "Objections", icon: <AlertIcon className="w-4 h-4" /> },
     { id: "traps", label: "Cross Traps", icon: <TargetIcon className="w-4 h-4" /> },
     { id: "openings", label: "Openings", icon: <GavelIcon className="w-4 h-4" /> },
-    { id: "rules", label: "AMTA Rules", icon: <ScaleIcon className="w-4 h-4" /> },
-    { id: "coach", label: "Coach", icon: <MessageIcon className="w-4 h-4" /> },
     { id: "drill", label: "Drill", icon: <PlayIcon className="w-4 h-4" /> },
-    { id: "practice", label: "Voice Practice", icon: <MicrophoneIcon className="w-4 h-4" /> },
     { id: "agents", label: "Agent Prep", icon: <UsersIcon className="w-4 h-4" /> },
   ];
 
@@ -1344,6 +1381,8 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                         id: cw.id,
                         name: cw.name,
                         called_by: cw.called_by,
+                        assigned_side: cw.assigned_side,
+                        is_reassignable: cw.is_reassignable || false,
                         role_description: cw.role_description,
                         outline: outlineMap.get(cw.id) || null,
                       }))
@@ -1351,6 +1390,8 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                         id: o.witness_id,
                         name: o.witness_name,
                         called_by: o.called_by,
+                        assigned_side: undefined as string | undefined,
+                        is_reassignable: false,
                         role_description: "",
                         outline: o,
                       }));
@@ -1380,8 +1421,18 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                     );
                   }
 
-                  const prosWitnesses = witnessList.filter((w) => w.called_by !== "defense");
-                  const defWitnesses = witnessList.filter((w) => w.called_by === "defense");
+                  // Group witnesses: "either" witnesses go to their assigned side
+                  const prosWitnesses = witnessList.filter((w) => {
+                    if (w.called_by === "either") return w.assigned_side === "plaintiff";
+                    return w.called_by === "plaintiff" || w.called_by === "prosecution";
+                  });
+                  const defWitnesses = witnessList.filter((w) => {
+                    if (w.called_by === "either") return w.assigned_side === "defense";
+                    return w.called_by === "defense";
+                  });
+                  const eitherWitnesses = witnessList.filter((w) =>
+                    (w.called_by === "either" && !w.assigned_side) || w.called_by === "unknown"
+                  );
 
                   const renderWitnessGroup = (witnesses: typeof witnessList, label: string, textColor: string, dotColor: string) => (
                     witnesses.length > 0 ? (
@@ -1393,27 +1444,37 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                         <div className="space-y-2">
                           {witnesses.map((w) => {
                             const outline = w.outline;
-                            const isDef = w.called_by === "defense";
+                            const isEither = w.is_reassignable || w.called_by === "either";
+                            const effectiveSide = isEither ? (w.assigned_side || "plaintiff") : w.called_by;
+                            const isDef = effectiveSide === "defense";
+                            const iconBg = isEither ? "bg-amber-500/20" : isDef ? "bg-emerald-500/20" : "bg-blue-500/20";
+                            const iconColor = isEither ? "text-amber-400" : isDef ? "text-emerald-400" : "text-blue-400";
+                            const isReassigning = reassigningWitness === w.id;
                             return (
                               <div
                                 key={w.id}
-                                className="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden"
+                                className={`bg-slate-800/50 rounded-xl border overflow-hidden ${
+                                  isEither ? "border-amber-500/30" : "border-slate-700/50"
+                                }`}
                               >
                                 <button
                                   onClick={() => setExpandedWitness(expandedWitness === w.id ? null : w.id)}
                                   className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                      !isDef ? "bg-blue-500/20" : "bg-emerald-500/20"
-                                    }`}>
-                                      <UsersIcon className={`w-5 h-5 ${!isDef ? "text-blue-400" : "text-emerald-400"}`} />
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBg}`}>
+                                      <UsersIcon className={`w-5 h-5 ${iconColor}`} />
                                     </div>
                                     <div className="text-left">
                                       <h4 className="font-medium text-white">{w.name}</h4>
-                                      <div className="flex items-center gap-1.5">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        {isEither && (
+                                          <span className="text-[10px] font-bold px-1 py-px rounded bg-amber-500/20 text-amber-400">
+                                            EITHER
+                                          </span>
+                                        )}
                                         <span className={`text-[10px] font-bold px-1 py-px rounded ${
-                                          isDef ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
+                                          isDef ? "bg-emerald-500/20 text-emerald-400" : "bg-blue-500/20 text-blue-400"
                                         }`}>
                                           {isDef ? "DEF" : "PROS"}
                                         </span>
@@ -1430,6 +1491,43 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                                     expandedWitness === w.id ? "rotate-180" : ""
                                   }`} />
                                 </button>
+
+                                {/* Reassignment toggle for "either" witnesses */}
+                                {isEither && expandedWitness === w.id && (
+                                  <div className="px-4 pb-2">
+                                    <div className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+                                      <span className="text-xs text-amber-300 font-medium whitespace-nowrap">Assign to:</span>
+                                      <div className="flex rounded-lg overflow-hidden border border-slate-600">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleReassignWitness(w.id, "plaintiff"); }}
+                                          disabled={isReassigning || effectiveSide === "plaintiff"}
+                                          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                                            effectiveSide === "plaintiff"
+                                              ? "bg-blue-600 text-white"
+                                              : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                                          } disabled:opacity-50`}
+                                        >
+                                          Prosecution
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleReassignWitness(w.id, "defense"); }}
+                                          disabled={isReassigning || effectiveSide === "defense"}
+                                          className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-slate-600 ${
+                                            effectiveSide === "defense"
+                                              ? "bg-emerald-600 text-white"
+                                              : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                                          } disabled:opacity-50`}
+                                        >
+                                          Defense
+                                        </button>
+                                      </div>
+                                      {isReassigning && (
+                                        <div className="w-4 h-4 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                                      )}
+                                      <span className="text-[10px] text-slate-500 ml-auto">Prep will regenerate</span>
+                                    </div>
+                                  </div>
+                                )}
 
                                 {expandedWitness === w.id && outline && (
                                   <div className="px-4 pb-4 space-y-4">
@@ -1504,6 +1602,7 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                     <>
                       {renderWitnessGroup(prosWitnesses, "Prosecution Witnesses", "text-blue-400", "bg-blue-400")}
                       {renderWitnessGroup(defWitnesses, "Defense Witnesses", "text-emerald-400", "bg-emerald-400")}
+                      {renderWitnessGroup(eitherWitnesses, "Either Side Witnesses", "text-amber-400", "bg-amber-400")}
                     </>
                   );
                 })()}
@@ -1848,96 +1947,6 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
               </div>
             )}
 
-            {/* AMTA Rules */}
-            {activeTab === "rules" && materials && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-4">
-                  <ScaleIcon className="w-5 h-5 text-indigo-400" />
-                  <h3 className="font-semibold text-white">AMTA Competition Rules</h3>
-                </div>
-                {materials.amta_rules.map((rule, i) => (
-                  <div
-                    key={i}
-                    className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-start gap-3"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-indigo-400">{i + 1}</span>
-                    </div>
-                    <p className="text-sm text-slate-300">{rule}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Coach Chat */}
-            {activeTab === "coach" && (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                  {chatMessages.length === 0 && (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-                        <MessageIcon className="w-8 h-8 text-indigo-400" />
-                      </div>
-                      <h3 className="font-semibold text-white mb-2">AI Coach</h3>
-                      <p className="text-sm text-slate-400 max-w-md mx-auto">
-                        Ask me anything about trial strategy, objections, witness examination, 
-                        or AMTA rules. I&apos;m here to help you prepare!
-                      </p>
-                      <div className="flex flex-wrap justify-center gap-2 mt-4">
-                        {["How do I handle a hostile witness?", "What objections should I watch for?", "Quiz me on the case"].map((q) => (
-                          <button
-                            key={q}
-                            onClick={() => handleSendCoachMessage(q)}
-                            className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
-                          >
-                            {q}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {chatMessages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                          msg.role === "user"
-                            ? "bg-indigo-600 text-white"
-                            : "bg-slate-800 text-slate-300"
-                        }`}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                      </div>
-                    </div>
-                  ))}
-
-                  {isChatLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-slate-800 rounded-2xl px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Unified Chat Input with Mic */}
-                <ChatInputWithVoice
-                  placeholder="Ask the coach anything..."
-                  isLoading={isChatLoading}
-                  onSend={handleSendCoachMessage}
-                />
-              </div>
-            )}
-
             {/* Drill Mode */}
             {activeTab === "drill" && (
               <div className="space-y-6">
@@ -2090,183 +2099,6 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
               </div>
             )}
 
-            {/* Voice Practice Mode */}
-            {activeTab === "practice" && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-                    <MicrophoneIcon className="w-8 h-8 text-indigo-400" />
-                  </div>
-                  <h3 className="font-semibold text-white mb-2">Voice Practice</h3>
-                  <p className="text-sm text-slate-400 max-w-md mx-auto">
-                    Practice speaking and get AI feedback on your delivery, pacing, and filler words.
-                    This helps you prepare for actual trial performance.
-                  </p>
-                </div>
-
-                {/* Practice Type Selection */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">
-                      What do you want to practice?
-                    </label>
-                    <select
-                      value={practiceType}
-                      onChange={(e) => setPracticeType(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="opening">Opening Statement</option>
-                      <option value="closing">Closing Argument</option>
-                      <option value="direct">Direct Examination Questions</option>
-                      <option value="cross">Cross-Examination Questions</option>
-                      <option value="objection">Making Objections</option>
-                      <option value="witness">Witness Testimony (Practice as Witness)</option>
-                    </select>
-                  </div>
-
-                  {/* Witness Selection for relevant practice types */}
-                  {(practiceType === "direct" || practiceType === "cross" || practiceType === "witness") && materials && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-2">
-                        Select Witness
-                      </label>
-                      <select
-                        value={practiceWitness}
-                        onChange={(e) => setPracticeWitness(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-500"
-                      >
-                        <option value="">Choose a witness...</option>
-                        {materials.witness_outlines.map((w) => (
-                          <option key={w.witness_id} value={w.witness_id}>
-                            {w.witness_name} ({w.called_by})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                {/* Practice Instructions */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                  <h4 className="text-sm font-semibold text-slate-300 mb-3">Practice Tips</h4>
-                  {practiceType === "opening" && (
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li>• Introduce yourself and state who you represent</li>
-                      <li>• Present your theory of the case clearly</li>
-                      <li>• Preview the evidence you will present</li>
-                      <li>• Speak at 130-150 WPM for clarity</li>
-                      <li>• Make eye contact with the jury (look at camera)</li>
-                    </ul>
-                  )}
-                  {practiceType === "closing" && (
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li>• Summarize the key evidence presented</li>
-                      <li>• Remind the jury of your theme</li>
-                      <li>• Address weaknesses in your case</li>
-                      <li>• End with a clear call to action</li>
-                      <li>• Vary your pace for emphasis</li>
-                    </ul>
-                  )}
-                  {practiceType === "direct" && (
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li>• Use open-ended questions (who, what, when, where, why)</li>
-                      <li>• Let the witness tell the story</li>
-                      <li>• Avoid leading questions</li>
-                      <li>• Establish foundation before key testimony</li>
-                      <li>• Listen actively and follow up</li>
-                    </ul>
-                  )}
-                  {practiceType === "cross" && (
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li>• Use leading questions that suggest the answer</li>
-                      <li>• One fact per question</li>
-                      <li>• Control the witness - don&apos;t let them explain</li>
-                      <li>• Know the answer before you ask</li>
-                      <li>• Build to your strongest points</li>
-                    </ul>
-                  )}
-                  {practiceType === "objection" && (
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li>• Stand immediately when objecting</li>
-                      <li>• State &quot;Objection&quot; clearly and firmly</li>
-                      <li>• Give the specific ground (hearsay, leading, etc.)</li>
-                      <li>• Be ready to explain if the judge asks</li>
-                      <li>• Accept rulings gracefully</li>
-                    </ul>
-                  )}
-                  {practiceType === "witness" && (
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li>• Answer only the question asked</li>
-                      <li>• Pause before answering to allow objections</li>
-                      <li>• Speak clearly and at a measured pace</li>
-                      <li>• Stay in character throughout</li>
-                      <li>• Don&apos;t volunteer extra information</li>
-                    </ul>
-                  )}
-                </div>
-
-                {/* Voice Practice Input */}
-                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl p-5 border border-indigo-500/30">
-                  <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                    <MicrophoneIcon className="w-5 h-5 text-indigo-400" />
-                    Practice Your Delivery
-                  </h4>
-                  <p className="text-xs text-slate-400 mb-4">
-                    Tap the mic and speak. Recording will auto-stop when you pause, then analyze your delivery.
-                  </p>
-                  <VoicePracticeInput
-                    sessionId={sessionId}
-                    placeholder="Tap the mic and start speaking..."
-                    context={practiceType === "opening" ? "opening_statement" :
-                            practiceType === "closing" ? "closing_argument" :
-                            practiceType === "direct" ? "direct_examination" :
-                            practiceType === "cross" ? "cross_examination" :
-                            practiceType === "objection" ? "objection" :
-                            practiceType === "witness" ? "witness_interview" : "general"}
-                    showAnalysis={true}
-                    autoSubmit={false}
-                    silenceTimeout={2000}
-                    onAnalysis={(analysis) => {
-                      setLastSpeechAnalysis(analysis);
-                      setPracticeHistory(prev => [...prev, {
-                        type: practiceType,
-                        transcript: analysis.transcript,
-                        analysis
-                      }]);
-                    }}
-                  />
-                </div>
-
-                {/* Practice History */}
-                {practiceHistory.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-slate-300">Practice History</h4>
-                      <button
-                        onClick={() => setPracticeHistory([])}
-                        className="text-xs text-slate-500 hover:text-slate-300"
-                      >
-                        Clear History
-                      </button>
-                    </div>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {practiceHistory.slice().reverse().map((entry, i) => (
-                        <div key={i} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-indigo-400 capitalize">{entry.type.replace("_", " ")}</span>
-                            <span className="text-xs text-slate-500">
-                              Score: {entry.analysis.clarity_score}/100 | WPM: {entry.analysis.words_per_minute}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 line-clamp-2">{entry.transcript}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {activeTab === "agents" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
@@ -2321,8 +2153,13 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
                       ? `${agentName}`
                       : `${sideLabel} Attorney (${subRole})`;
                   } else if (roleType === "witness") {
-                    roleColor = "text-amber-400";
-                    roleBg = "bg-amber-500/10";
+                    const isReassignable = !!(agentData as Record<string, unknown>).is_reassignable;
+                    const originalSide = (agentData as Record<string, unknown>).original_side as string | undefined;
+                    const isEitherOrigin = isReassignable || originalSide === "Either";
+                    const isDefSide = agentSide === "Defense";
+                    roleColor = isEitherOrigin ? "text-amber-400" : isDefSide ? "text-emerald-400" : "text-blue-400";
+                    roleBg = isEitherOrigin ? "bg-amber-500/10" : isDefSide ? "bg-emerald-500/10" : "bg-blue-500/10";
+                    sideLabel = sideLabel || "Prosecution";
                     if (!agentName) {
                       displayName = agentKey.replace("witness_", "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
                     }
@@ -2356,6 +2193,45 @@ export function PreparationPanel({ sessionId, humanRole, className = "", style, 
 
                       {isExpanded && (
                         <div className="p-4 space-y-3 bg-slate-800/30 border-t border-slate-700/50">
+                          {/* Reassignment toggle for "either" witnesses */}
+                          {roleType === "witness" && !!(agentData as Record<string, unknown>).is_reassignable && (() => {
+                            const wid = agentKey.replace("witness_", "");
+                            const assignedSide = (agentData as Record<string, unknown>).assigned_side as string || "plaintiff";
+                            const isReassigningThis = reassigningWitness === wid;
+                            return (
+                              <div className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg mb-3">
+                                <span className="text-xs text-amber-300 font-medium whitespace-nowrap">Assign to:</span>
+                                <div className="flex rounded-lg overflow-hidden border border-slate-600">
+                                  <button
+                                    onClick={() => handleReassignWitness(wid, "plaintiff")}
+                                    disabled={isReassigningThis || assignedSide === "plaintiff"}
+                                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                                      assignedSide === "plaintiff"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                                    } disabled:opacity-50`}
+                                  >
+                                    Prosecution
+                                  </button>
+                                  <button
+                                    onClick={() => handleReassignWitness(wid, "defense")}
+                                    disabled={isReassigningThis || assignedSide === "defense"}
+                                    className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-slate-600 ${
+                                      assignedSide === "defense"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                                    } disabled:opacity-50`}
+                                  >
+                                    Defense
+                                  </button>
+                                </div>
+                                {isReassigningThis && (
+                                  <div className="w-4 h-4 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                                )}
+                                <span className="text-[10px] text-slate-500 ml-auto">Prep will regenerate</span>
+                              </div>
+                            );
+                          })()}
                           {Object.entries(content).map(([key, value]) => {
                             const label = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
                             if (Array.isArray(value)) {

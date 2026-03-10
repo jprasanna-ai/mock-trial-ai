@@ -57,8 +57,8 @@ All audio must be streamed (no blocking).
 
 ## 5. Data Storage
 
-- **Supabase (PostgreSQL)**: Sessions, scoring results, case metadata, participants, prep materials (including pre-generated opening statements)
-- **Supabase Storage**: Case material files (PDFs, exhibits, affidavits)
+- **Supabase (PostgreSQL)**: Sessions, scoring results, case metadata, participants, prep materials (including pre-generated opening statements), live scores, transcript metadata
+- **Supabase Storage**: Case material files (PDFs, exhibits, affidavits), trial transcripts, TTS audio cache
 - **Pinecone**: Case facts, witness memory, transcript embeddings
 
 ### Preparation Materials Schema
@@ -90,6 +90,19 @@ cases/{case_id}/
 ├── stipulations/         # Agreed-upon facts
 ├── jury_instructions/    # Legal standards
 └── rules/                # Competition rules
+```
+
+TTS audio files are stored in the `tts-audio-cache` bucket:
+
+```
+tts-audio-cache/
+└── {sha256_hash}.mp3    # Keyed by SHA-256(text + role + speaker)
+```
+
+Trial transcripts are stored in the `trial-transcripts` bucket:
+
+```
+transcripts/{user_id}/{case_id}/{session_id}.json
 ```
 
 ---
@@ -144,6 +157,34 @@ Changes saved via the persona API are hot-patched to live agents immediately.
 - File path: `transcripts/{user_id}/{case_id}/{session_id}.json`
 - **Metadata table**: `trial_transcript_history` (session_id, user_id, case_id, case_name, started_at, entry_count, phases)
 - Transcripts saved progressively after openings, each exam, and closings
+- Public transcript listing via `GET /api/trial/transcripts/public` (no auth required)
+- Individual transcript retrieval includes `audio_keys` map linking entries to cached TTS audio
+
+---
+
+## TTS Audio Cache
+
+- **Supabase Storage bucket**: `tts-audio-cache`
+- Files keyed by SHA-256 hash of (text content + role + speaker name)
+- Audio generated once during live trial, stored permanently, never regenerated
+- Served via `GET /api/public/tts/audio/{cache_key}` (public, no auth)
+- Backfill for historical transcripts: `POST /api/admin/backfill-audio` (async via `BackgroundTasks`)
+
+---
+
+## Public Routes
+
+The following frontend routes are accessible without authentication:
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Homepage |
+| `/login` | Login/signup page |
+| `/about` | About page |
+| `/contact` | Contact page |
+| `/trials` | Public recorded trials listing |
+| `/trials/{sessionId}` | Unified trial detail (transcript + audio + scores) |
+| `/auth/*` | OAuth callback handlers |
 
 ---
 

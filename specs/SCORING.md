@@ -70,6 +70,8 @@ Average across all scored categories for that role.
 - Uses a single judge for speed (full 3-judge panel for final scoring)
 - Results cached in memory and exposed via `/api/scoring/{session_id}/live-scores`
 - Frontend polls for updates and displays in the Scores & Stats panel
+- **Score merging**: When witness examination scores are generated, they are merged with existing scores (opening, closing) rather than replacing them, preserving all attorney sub-role scores throughout the trial
+- **Transcript sync**: Opening and closing statement transcript entries are awaited before live scoring to prevent race conditions
 
 ---
 
@@ -79,6 +81,7 @@ The `/scores/{sessionId}` page provides:
 - **Category-by-category breakdown** with every team member's score and justification per category
 - **Individual performance cards** per participant with strengths (7+) and improvement areas (<7)
 - **Overall judge comments** per participant
+- **Email Report** button to send scores and transcript via email
 - Full report available via `GET /api/scoring/{session_id}/full-report`
 
 ---
@@ -88,6 +91,22 @@ The `/scores/{sessionId}` page provides:
 - In-memory cache for fast live score access
 - Supabase (PostgreSQL) for persistent storage via `ScoringRepository`
 - Stored data: session ID, participant ID, role, ballots, final scores, overall average
+
+### Historical Score Access
+
+Scoring endpoints work for both active in-memory sessions and historical completed trials:
+
+| Endpoint | Historical Behavior |
+|----------|-------------------|
+| `GET /api/scoring/{session_id}/live-scores` | Loads from `live_scores` DB table if not in memory |
+| `GET /api/scoring/{session_id}/full-report` | Falls back to DB scores + `transcript_storage` for case metadata |
+| `GET /api/scoring/{session_id}/verdict` | Computes verdict from DB scores if no live session exists |
+
+If no live session object is available (e.g., after server restart):
+- Scores are loaded from the `live_scores` database table
+- Case name, case ID, and phase are resolved from `transcript_storage` metadata
+- The verdict is computed from stored scores without requiring an active session
+- A 404 is only returned if absolutely no scoring data exists for the session
 
 ---
 

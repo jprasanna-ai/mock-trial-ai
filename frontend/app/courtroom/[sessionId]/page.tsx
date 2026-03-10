@@ -24,6 +24,7 @@ import CaseMaterialsModal, { type ModalTab } from "@/components/CaseMaterialsMod
 import PreparationPanel from "@/components/PreparationPanel";
 import PersonaCustomizer from "@/components/PersonaCustomizer";
 import { ChevronDownIcon } from "@/components/ui/icons";
+import { API_BASE, apiFetch } from "@/lib/api";
 
 // =============================================================================
 // SVG ICONS
@@ -269,14 +270,12 @@ const normalizePhase = (phase: string | undefined | null): TrialPhase => {
 // API HELPERS
 // =============================================================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 function saveTranscript(sessionId: string) {
-  fetch(`${API_BASE}/api/trial/${sessionId}/save-transcript`, { method: "POST" }).catch(() => {});
+  apiFetch(`${API_BASE}/api/trial/${sessionId}/save-transcript`, { method: "POST" }).catch(() => {});
 }
 
 async function fetchTrialState(sessionId: string): Promise<TrialStateResponse> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/state`);
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/state`);
   if (!response.ok) {
     throw new Error("Failed to fetch trial state");
   }
@@ -284,7 +283,7 @@ async function fetchTrialState(sessionId: string): Promise<TrialStateResponse> {
 }
 
 async function fetchSessionStatus(sessionId: string): Promise<SessionStatus> {
-  const response = await fetch(`${API_BASE}/api/session/${sessionId}/status`);
+  const response = await apiFetch(`${API_BASE}/api/session/${sessionId}/status`);
   if (!response.ok) {
     throw new Error("Failed to fetch session status");
   }
@@ -304,11 +303,10 @@ async function fetchSpeakerPermissions(
   sessionId: string,
   role: Role
 ): Promise<SpeakerPermissions> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_BASE}/api/trial/${sessionId}/validate-speaker`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role }),
     }
   );
@@ -339,9 +337,8 @@ async function triggerAITurn(
   message?: string;
   cached?: boolean;
 }> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/ai-turn`, {
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/ai-turn`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action,
       witness_id: witnessId,
@@ -365,9 +362,8 @@ interface TranscriptHistoryEntry {
 }
 
 async function advancePhase(sessionId: string, targetPhase: string): Promise<{success: boolean; message: string; current_phase: string}> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/advance-phase`, {
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/advance-phase`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ target_phase: targetPhase }),
   });
   if (!response.ok) {
@@ -412,7 +408,7 @@ interface WitnessListResponse {
 }
 
 async function fetchWitnesses(sessionId: string): Promise<WitnessListResponse> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/witnesses`);
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/witnesses`);
   if (!response.ok) {
     throw new Error("Failed to fetch witnesses");
   }
@@ -426,9 +422,8 @@ async function callWitness(sessionId: string, witnessId: string, callingSide: st
   calling_side: string;
   message: string;
 }> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/call-witness`, {
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/call-witness`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ witness_id: witnessId, calling_side: callingSide }),
   });
   if (!response.ok) {
@@ -444,9 +439,8 @@ async function completeExamination(sessionId: string, examinationType: string): 
   next_action: string;
   next_phase: string;
 }> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/complete-examination`, {
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/complete-examination`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ examination_type: examinationType }),
   });
   if (!response.ok) throw new Error("Failed to complete examination");
@@ -454,25 +448,25 @@ async function completeExamination(sessionId: string, examinationType: string): 
 }
 
 async function requestRedirect(sessionId: string): Promise<{success: boolean; phase: string}> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/request-redirect`, { method: "POST" });
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/request-redirect`, { method: "POST" });
   if (!response.ok) throw new Error("Failed to request redirect");
   return response.json();
 }
 
 async function waiveRedirect(sessionId: string): Promise<{success: boolean; next_action: string; phase: string}> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/waive-redirect`, { method: "POST" });
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/waive-redirect`, { method: "POST" });
   if (!response.ok) throw new Error("Failed to waive redirect");
   return response.json();
 }
 
 async function requestRecross(sessionId: string): Promise<{success: boolean; phase: string}> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/request-recross`, { method: "POST" });
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/request-recross`, { method: "POST" });
   if (!response.ok) throw new Error("Failed to request recross");
   return response.json();
 }
 
 async function waiveRecross(sessionId: string): Promise<{success: boolean; next_action: string; phase: string}> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/waive-recross`, { method: "POST" });
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/waive-recross`, { method: "POST" });
   if (!response.ok) throw new Error("Failed to waive recross");
   return response.json();
 }
@@ -485,9 +479,8 @@ async function restCase(sessionId: string, side: string): Promise<{
   prosecution_rested: boolean;
   defense_rested: boolean;
 }> {
-  const response = await fetch(`${API_BASE}/api/trial/${sessionId}/rest-case`, {
+  const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/rest-case`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ side }),
   });
   if (!response.ok) throw new Error("Failed to rest case");
@@ -532,9 +525,8 @@ async function autoExamineWitness(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 300_000); // 5 min max
   try {
-    const response = await fetch(`${API_BASE}/api/trial/${sessionId}/auto-examine`, {
+    const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/auto-examine`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         witness_id: witnessId,
         calling_side: callingSide,
@@ -561,7 +553,7 @@ async function autoExamineWitness(
 
 async function fetchTranscriptHistory(sessionId: string): Promise<TranscriptEntry[]> {
   try {
-    const response = await fetch(`${API_BASE}/api/trial/${sessionId}/transcript`);
+    const response = await apiFetch(`${API_BASE}/api/trial/${sessionId}/transcript`);
     if (!response.ok) {
       return [];
     }
@@ -587,6 +579,51 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Isolated progress bar — re-renders on its own interval, not the parent page */
+function SpeechProgressBar({
+  progressRef,
+  duration,
+  onSeek,
+}: {
+  progressRef: React.RefObject<number>;
+  duration: number;
+  onSeek: (time: number) => void;
+}) {
+  const [pos, setPos] = React.useState(0);
+  React.useEffect(() => {
+    if (duration <= 0) return;
+    const id = setInterval(() => setPos(progressRef.current ?? 0), 250);
+    return () => clearInterval(id);
+  }, [duration, progressRef]);
+  if (duration <= 0) return null;
+  const pct = Math.min((pos / duration) * 100, 100);
+  return (
+    <div className="mb-3">
+      <div
+        className="relative w-full h-2 bg-slate-700 rounded-full cursor-pointer group"
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const p = (e.clientX - rect.left) / rect.width;
+          onSeek(p * duration);
+        }}
+      >
+        <div
+          className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all"
+          style={{ width: `${pct}%` }}
+        />
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ left: `${pct}%` }}
+        />
+      </div>
+      <div className="flex justify-between mt-1 text-xs text-slate-500">
+        <span>{formatTime(pos)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+    </div>
+  );
 }
 
 function normalizeRole(role: string): Role {
@@ -660,6 +697,8 @@ export default function CourtroomPage() {
   
   // Witness & examination state
   const [witnesses, setWitnesses] = useState<WitnessInfo[]>([]);
+  const [prosecutionWitnessIds, setProsecutionWitnessIds] = useState<string[]>([]);
+  const [defenseWitnessIds, setDefenseWitnessIds] = useState<string[]>([]);
   const [currentWitnessId, setCurrentWitnessId] = useState<string | null>(null);
   const [currentWitnessName, setCurrentWitnessName] = useState<string | null>(null);
   const [caseInChief, setCaseInChief] = useState<string>("prosecution");
@@ -677,6 +716,7 @@ export default function CourtroomPage() {
 
   // Live scoring state
   const [liveScores, setLiveScores] = useState<Record<string, any>>({});
+  const [verdict, setVerdict] = useState<{winner: string; prosecution_avg: number; defense_avg: number; margin: number; verdict_text: string} | null>(null);
   const [scoresCollapsed, setScoresCollapsed] = useState(false);
   const [phaseBarCollapsed, setPhaseBarCollapsed] = useState(false);
   const [teamMemory, setTeamMemory] = useState<Record<string, any> | null>(null);
@@ -687,6 +727,45 @@ export default function CourtroomPage() {
   const [objectionCounts, setObjectionCounts] = useState<{ prosecution: number; defense: number; sustained: number; overruled: number }>({
     prosecution: 0, defense: 0, sustained: 0, overruled: 0,
   });
+
+  // Audio toggle — when false, all TTS is skipped and trial runs on transcript only
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const audioEnabledRef = useRef(true);
+  useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
+
+  // Trial flow control — pause / resume / stop
+  const trialPausedRef = useRef(false);
+  const trialStoppedRef = useRef(false);
+  const [trialFlowStatus, setTrialFlowStatus] = useState<"idle" | "running" | "paused" | "stopped">("idle");
+
+  const pauseTrial = useCallback(() => {
+    trialPausedRef.current = true;
+    setTrialFlowStatus("paused");
+  }, []);
+
+  const resumeTrial = useCallback(() => {
+    trialPausedRef.current = false;
+    setTrialFlowStatus("running");
+  }, []);
+
+  const stopTrial = useCallback(() => {
+    trialStoppedRef.current = true;
+    trialPausedRef.current = false;
+    setTrialFlowStatus("stopped");
+  }, []);
+
+  /**
+   * Check pause/stop state inside async trial flows.
+   * Awaiting this between major operations lets the user pause or abort.
+   * Throws "TRIAL_STOPPED" if the user clicks Stop.
+   */
+  const checkPauseStop = useCallback(async () => {
+    if (trialStoppedRef.current) throw new Error("TRIAL_STOPPED");
+    while (trialPausedRef.current) {
+      await new Promise((r) => setTimeout(r, 300));
+      if (trialStoppedRef.current) throw new Error("TRIAL_STOPPED");
+    }
+  }, []);
 
   // AI turn state
   const [isAITurnInProgress, setIsAITurnInProgress] = useState(false);
@@ -699,7 +778,7 @@ export default function CourtroomPage() {
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const isSpeakingRef = useRef(false);
   const ttsAbortRef = useRef<AbortController | null>(null);
-  const [speechProgress, setSpeechProgress] = useState(0);
+  const speechProgressRef = useRef(0);
   const [speechDuration, setSpeechDuration] = useState(0);
   const [speechSpeed, setSpeechSpeed] = useState(1.0);
   const speechSpeedRef = useRef(1.0);
@@ -768,7 +847,7 @@ export default function CourtroomPage() {
 
         // Check if opening statements are ready (for prep phase gating)
         try {
-          const openingsResp = await fetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
+          const openingsResp = await apiFetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
           if (openingsResp.ok) {
             const openingsData = await openingsResp.json();
             setOpeningsReady(openingsData.ready);
@@ -781,6 +860,8 @@ export default function CourtroomPage() {
         try {
           const witnessData = await fetchWitnesses(sessionId);
           setWitnesses(witnessData.witnesses);
+          setProsecutionWitnessIds(witnessData.prosecution_witnesses || []);
+          setDefenseWitnessIds(witnessData.defense_witnesses || []);
           setCurrentWitnessId(witnessData.current_witness_id);
           setCurrentWitnessName(witnessData.current_witness_name || null);
           setCaseInChief(witnessData.case_in_chief || "prosecution");
@@ -793,7 +874,7 @@ export default function CourtroomPage() {
 
         // Load live scores if any
         try {
-          const liveResp = await fetch(`${API_BASE}/api/scoring/${sessionId}/live-scores`);
+          const liveResp = await apiFetch(`${API_BASE}/api/scoring/${sessionId}/live-scores`);
           if (liveResp.ok) {
             const liveData = await liveResp.json();
             if (liveData.scores && Object.keys(liveData.scores).length > 0) {
@@ -802,6 +883,16 @@ export default function CourtroomPage() {
           }
         } catch {
           // Non-critical
+        }
+
+        // Load verdict only if trial reached scoring phase
+        if (state.phase?.toLowerCase() === "scoring" || state.phase?.toLowerCase() === "completed") {
+          try {
+            const vResp = await apiFetch(`${API_BASE}/api/scoring/${sessionId}/verdict`);
+            if (vResp.ok) { setVerdict(await vResp.json()); }
+          } catch {
+            // Non-critical — verdict may not exist yet
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load courtroom");
@@ -813,42 +904,57 @@ export default function CourtroomPage() {
     loadState();
   }, [sessionId]);
 
-  // Poll for trial state updates
+  // Poll for trial state updates — only re-render when values actually change
+  const lastPolledStateRef = useRef<string>("");
   useEffect(() => {
     if (!sessionStatus?.initialized) return;
 
     const interval = setInterval(async () => {
       try {
         const state = await fetchTrialState(sessionId);
-        setTrialState((prev) => ({
-          ...prev,
-          phase: normalizePhase(state.phase),
-          currentSpeaker: state.current_speaker as Role | null,
-          isObjectionPending: state.is_objection_pending,
-          isJudgeInterrupting: state.is_judge_interrupting,
-        }));
+        const phase = normalizePhase(state.phase);
+        const fingerprint = `${phase}|${state.current_speaker}|${state.is_objection_pending}|${state.is_judge_interrupting}`;
+        if (fingerprint !== lastPolledStateRef.current) {
+          lastPolledStateRef.current = fingerprint;
+          setTrialState((prev) => ({
+            ...prev,
+            phase,
+            currentSpeaker: state.current_speaker as Role | null,
+            isObjectionPending: state.is_objection_pending,
+            isJudgeInterrupting: state.is_judge_interrupting,
+          }));
+        }
 
         if (sessionStatus.humanRole) {
           const perms = await fetchSpeakerPermissions(sessionId, sessionStatus.humanRole);
-          setPermissions(perms);
-          setTrialState((prev) => ({ ...prev, canSpeak: perms.canSpeak }));
+          setPermissions((prev) => {
+            if (prev.canSpeak === perms.canSpeak && prev.reason === perms.reason) return prev;
+            return perms;
+          });
+          setTrialState((prev) => {
+            if (prev.canSpeak === perms.canSpeak) return prev;
+            return { ...prev, canSpeak: perms.canSpeak };
+          });
         }
       } catch {
         // Silently ignore polling errors
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [sessionId, sessionStatus?.initialized, sessionStatus?.humanRole]);
 
   // Poll for opening statements readiness during prep phase
+  const phaseRef = useRef(trialState.phase);
+  phaseRef.current = trialState.phase;
   useEffect(() => {
-    const normalizedPhase = normalizePhase(trialState.phase);
-    if (normalizedPhase !== "prep" || openingsReady === true) return;
+    if (openingsReady === true) return;
+    if (normalizePhase(phaseRef.current) !== "prep") return;
 
     const pollOpenings = async () => {
+      if (normalizePhase(phaseRef.current) !== "prep") return;
       try {
-        const resp = await fetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
+        const resp = await apiFetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
         if (resp.ok) {
           const data = await resp.json();
           setOpeningsReady(data.ready);
@@ -859,9 +965,9 @@ export default function CourtroomPage() {
     };
 
     pollOpenings();
-    const interval = setInterval(pollOpenings, 3000);
+    const interval = setInterval(pollOpenings, 5000);
     return () => clearInterval(interval);
-  }, [sessionId, trialState.phase, openingsReady]);
+  }, [sessionId, openingsReady]);
 
   // Cleanup speech on unmount
   useEffect(() => {
@@ -944,7 +1050,7 @@ export default function CourtroomPage() {
     setIsAISpeaking(false);
     setAiSpeakerName(null);
     setCurrentSpeaker(null);
-    setSpeechProgress(0);
+    speechProgressRef.current = 0;
     setSpeechDuration(0);
   }, []);
 
@@ -996,33 +1102,17 @@ export default function CourtroomPage() {
     });
   }, []);
 
-  // Fetch cached opening audio from backend. Returns Blob or null (404 = not cached).
-  const fetchCachedOpeningAudio = useCallback(async (
-    side: "plaintiff" | "defense"
-  ): Promise<Blob | null> => {
-    try {
-      const res = await fetch(`${API_BASE}/api/prep/${sessionId}/opening-audio/${side}`);
-      if (res.ok) {
-        const raw = await res.blob();
-        return new Blob([raw], { type: "audio/mpeg" });
-      }
-    } catch (e) {
-      console.warn(`No cached opening audio for ${side}:`, e);
-    }
-    return null;
-  }, [sessionId]);
-
   // Pre-fetch TTS audio without playing. Returns a Blob or null.
   const prefetchTTSAudio = useCallback(async (
     text: string, role: string, speakerName: string
   ): Promise<Blob | null> => {
+    if (!audioEnabledRef.current) return null;
     try {
       const controller = new AbortController();
       const ttsTimeout = Math.max(45_000, text.length * 30);
       const timer = setTimeout(() => controller.abort(), ttsTimeout);
-      const res = await fetch(`${API_BASE}/api/trial/${sessionId}/ai-tts`, {
+      const res = await apiFetch(`${API_BASE}/api/trial/${sessionId}/ai-tts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, role, speaker_name: speakerName }),
         signal: controller.signal,
       });
@@ -1047,6 +1137,10 @@ export default function CourtroomPage() {
     text: string, role: string, speakerName: string,
     preloadedBlob?: Blob | null,
   ): Promise<void> => {
+    if (!audioEnabledRef.current) {
+      speechCompleteRef.current = true;
+      return;
+    }
     speechCompleteRef.current = false;
 
     // Stop any previous speech but don't abort the whole TTS pipeline
@@ -1087,7 +1181,7 @@ export default function CourtroomPage() {
       setIsAISpeaking(false);
       setAiSpeakerName(null);
       setCurrentSpeaker(null);
-      setSpeechProgress(0);
+      speechProgressRef.current = 0;
       setSpeechDuration(0);
     };
 
@@ -1209,7 +1303,7 @@ export default function CourtroomPage() {
             return;
           }
 
-          setSpeechProgress(getEstimatedPos());
+          speechProgressRef.current = getEstimatedPos();
         }, 200);
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = progInterval;
@@ -1272,8 +1366,7 @@ export default function CourtroomPage() {
           if (Math.abs(audio.playbackRate - speechSpeedRef.current) > 0.01) {
             audio.playbackRate = speechSpeedRef.current;
           }
-          setSpeechProgress(audio.currentTime);
-          setSpeechDuration(audio.duration || 0);
+          speechProgressRef.current = audio.currentTime;
         }, 200);
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = progInterval;
@@ -1310,9 +1403,8 @@ export default function CourtroomPage() {
       ttsAbortRef.current = abortCtrl;
       const fetchTimer = setTimeout(() => abortCtrl.abort(), 40_000);
       try {
-        const ttsRes = await fetch(`${API_BASE}/api/trial/${sessionId}/ai-tts`, {
+        const ttsRes = await apiFetch(`${API_BASE}/api/trial/${sessionId}/ai-tts`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, role, speaker_name: speakerName }),
           signal: abortCtrl.signal,
         });
@@ -1375,6 +1467,7 @@ export default function CourtroomPage() {
   }, []);
 
   const waitForSpeechComplete = useCallback(async () => {
+    if (!audioEnabledRef.current) return;
     const maxWait = 600_000;
     const start = Date.now();
     while (!speechCompleteRef.current && Date.now() - start < maxWait) {
@@ -1385,7 +1478,7 @@ export default function CourtroomPage() {
   const handleSeek = useCallback((time: number) => {
     if (currentAudioRef.current) {
       currentAudioRef.current.currentTime = time;
-      setSpeechProgress(time);
+      speechProgressRef.current = time;
     }
   }, []);
 
@@ -1449,6 +1542,10 @@ export default function CourtroomPage() {
   // Speak a clerk announcement using a young female voice via backend TTS,
   // falling back to browser TTS. Returns a promise that resolves when done.
   const speakClerk = useCallback(async (text: string, preloadedBlob?: Blob | null): Promise<void> => {
+    if (!audioEnabledRef.current) {
+      speechCompleteRef.current = true;
+      return;
+    }
     speechCompleteRef.current = false;
 
     if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null; }
@@ -1634,9 +1731,8 @@ export default function CourtroomPage() {
       try {
         const controller = new AbortController();
         const fetchTimer = setTimeout(() => controller.abort(), 30_000);
-        const ttsRes = await fetch(`${API_BASE}/api/trial/${sessionId}/ai-tts`, {
+        const ttsRes = await apiFetch(`${API_BASE}/api/trial/${sessionId}/ai-tts`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, role: "judge", speaker_name: "Court Clerk" }),
           signal: controller.signal,
         });
@@ -1698,12 +1794,12 @@ export default function CourtroomPage() {
       role: "judge" as Role,
       speakerName: "Court Clerk",
       text,
-      phase: (phase || trialState.phase) as TrialPhase,
+      phase: (phase || phaseRef.current) as TrialPhase,
       isHuman: false,
       isFinal: true,
     };
     setTranscript((prev) => [...prev, entry]);
-  }, [trialState.phase]);
+  }, []);
 
   // Wait for AI speech to finish playing (audio or browser TTS).
   // Uses isSpeakingRef to cover the window while TTS is being fetched.
@@ -1753,6 +1849,10 @@ export default function CourtroomPage() {
   // Text is pre-generated during preparation; all TTS audio is prefetched in
   // parallel at the start so playback is near-instant once each speaker's turn arrives.
   const runOpeningSequence = useCallback(async () => {
+    trialStoppedRef.current = false;
+    trialPausedRef.current = false;
+    setTrialFlowStatus("running");
+
     const subRole = sessionStatus?.attorneySubRole || "direct_cross";
     const humanSide = sessionStatus?.humanRole?.includes("plaintiff") ? "plaintiff" : "defense";
     const humanIsOpening = subRole === "opening";
@@ -1783,15 +1883,13 @@ export default function CourtroomPage() {
     let defText: string | null = null;
     let prosAttorneyName = "Prosecution Attorney";
     let defAttorneyName = "Defense Attorney";
-    let prosTextFromCache = false;
-    let defTextFromCache = false;
 
     try {
-      const openingsResp = await fetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
+      const openingsResp = await apiFetch(`${API_BASE}/api/prep/${sessionId}/opening-statements`);
       if (openingsResp.ok) {
         const data = await openingsResp.json();
-        if (data.opening_plaintiff) { prosText = data.opening_plaintiff; prosTextFromCache = true; }
-        if (data.opening_defense) { defText = data.opening_defense; defTextFromCache = true; }
+        if (data.opening_plaintiff) { prosText = data.opening_plaintiff; }
+        if (data.opening_defense) { defText = data.opening_defense; }
         if (data.plaintiff_attorney_name) prosAttorneyName = data.plaintiff_attorney_name;
         if (data.defense_attorney_name) defAttorneyName = data.defense_attorney_name;
       }
@@ -1801,6 +1899,8 @@ export default function CourtroomPage() {
 
     const prosIsTeammate = humanSide === "plaintiff";
     const defIsTeammate = humanSide === "defense";
+    let prosFromAITurn = false;
+    let defFromAITurn = false;
 
     if (!prosText) {
       setAiTurnMessage("Generating prosecution opening statement...");
@@ -1812,7 +1912,7 @@ export default function CourtroomPage() {
       }
       prosText = prosResult.text;
       prosAttorneyName = prosResult.attorney_name || prosResult.speaker;
-      prosTextFromCache = false;
+      prosFromAITurn = true;
     }
 
     if (needAIDef && !defText) {
@@ -1821,7 +1921,7 @@ export default function CourtroomPage() {
       if (defResult.success) {
         defText = defResult.text;
         defAttorneyName = defResult.attorney_name || defResult.speaker;
-        defTextFromCache = false;
+        defFromAITurn = true;
       }
     }
 
@@ -1835,17 +1935,9 @@ export default function CourtroomPage() {
     // ──────────────────────────────────────────────────────────────────
     setAiTurnMessage("Loading audio...");
 
-    const prosAudioPromise = prosTextFromCache
-      ? fetchCachedOpeningAudio("plaintiff").then(
-          cached => cached || prefetchTTSAudio(prosText, prosRole, prosAttorneyName)
-        )
-      : prefetchTTSAudio(prosText, prosRole, prosAttorneyName);
+    const prosAudioPromise = prefetchTTSAudio(prosText, prosRole, prosAttorneyName);
     const defAudioPromise = needAIDef && defText
-      ? (defTextFromCache
-          ? fetchCachedOpeningAudio("defense").then(
-              cached => cached || prefetchTTSAudio(defText!, defRole, defAttorneyName)
-            )
-          : prefetchTTSAudio(defText!, defRole, defAttorneyName))
+      ? prefetchTTSAudio(defText!, defRole, defAttorneyName)
       : Promise.resolve(null);
     const prosClerkTTSPromise = prefetchTTSAudio(prosAnnouncement, "judge", "Court Clerk");
     const defClerkTTSPromise = needAIDef
@@ -1861,15 +1953,24 @@ export default function CourtroomPage() {
     await speakClerk(prosAnnouncement, prosClerkBlob);
     await waitForSpeechComplete();
 
-    // Record prosecution opening to backend transcript (so it persists)
-    fetch(`${API_BASE}/api/trial/${sessionId}/record-transcript`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        speaker: prosAttorneyName, role: prosRole,
-        text: prosText, phase: "OPENING", event_type: "opening_statement",
-      }),
-    }).catch(() => {});
+    // Record prosecution opening to backend transcript (skip if AI turn already recorded it)
+    if (!prosFromAITurn) {
+      const prosRecordBody = { speaker: prosAttorneyName, role: prosRole, text: prosText, phase: "OPENING", event_type: "opening_statement" };
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const rr = await apiFetch(`${API_BASE}/api/trial/${sessionId}/record-transcript`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(prosRecordBody),
+          });
+          if (rr.ok) { console.log("Prosecution opening recorded to backend transcript"); break; }
+          console.warn(`record-transcript (pros opening) attempt ${attempt + 1} HTTP ${rr.status}`);
+        } catch (err) {
+          console.warn(`record-transcript (pros opening) attempt ${attempt + 1} error:`, err);
+        }
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 500));
+      }
+    }
 
     addAITranscriptEntry({
       role: prosRole,
@@ -1886,12 +1987,17 @@ export default function CourtroomPage() {
 
     // Score immediately after prosecution opening
     try {
-      const scoreResp = await fetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST" });
+      const scoreResp = await apiFetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST", headers: { "Content-Type": "application/json" } });
       if (scoreResp.ok) {
         const scoreData = await scoreResp.json();
-        if (scoreData.scores) setLiveScores((prev) => ({ ...prev, ...scoreData.scores }));
+        if (scoreData.scores) {
+          console.log("Opening scores after pros:", Object.keys(scoreData.scores));
+          setLiveScores((prev) => ({ ...prev, ...scoreData.scores }));
+        }
+      } else {
+        console.warn("live-score after pros opening failed:", scoreResp.status);
       }
-    } catch { /* non-critical */ }
+    } catch (err) { console.warn("live-score after pros opening error:", err); }
 
     await new Promise((r) => setTimeout(r, 200));
 
@@ -1910,15 +2016,24 @@ export default function CourtroomPage() {
       await speakClerk(defAnnouncement, defClerkBlob);
       await waitForSpeechComplete();
 
-      // Record defense opening to backend transcript
-      fetch(`${API_BASE}/api/trial/${sessionId}/record-transcript`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          speaker: defAttorneyName, role: defRole,
-          text: defText, phase: "OPENING", event_type: "opening_statement",
-        }),
-      }).catch(() => {});
+      // Record defense opening to backend transcript (skip if AI turn already recorded it)
+      if (!defFromAITurn) {
+        const defRecordBody = { speaker: defAttorneyName, role: defRole, text: defText, phase: "OPENING", event_type: "opening_statement" };
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const rr = await apiFetch(`${API_BASE}/api/trial/${sessionId}/record-transcript`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(defRecordBody),
+            });
+            if (rr.ok) { console.log("Defense opening recorded to backend transcript"); break; }
+            console.warn(`record-transcript (def opening) attempt ${attempt + 1} HTTP ${rr.status}`);
+          } catch (err) {
+            console.warn(`record-transcript (def opening) attempt ${attempt + 1} error:`, err);
+          }
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 500));
+        }
+      }
 
       addAITranscriptEntry({
         role: defRole,
@@ -1933,24 +2048,31 @@ export default function CourtroomPage() {
       await waitForSpeechComplete();
     }
 
-    // Trigger live scoring after openings
+    // Trigger live scoring after both openings
     try {
-      const scoreResp = await fetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST" });
+      const scoreResp = await apiFetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST", headers: { "Content-Type": "application/json" } });
       if (scoreResp.ok) {
         const scoreData = await scoreResp.json();
-        if (scoreData.scores) setLiveScores((prev) => ({ ...prev, ...scoreData.scores }));
+        if (scoreData.scores) {
+          console.log("Opening scores after both:", Object.keys(scoreData.scores));
+          setLiveScores((prev) => ({ ...prev, ...scoreData.scores }));
+        }
+      } else {
+        console.warn("live-score after openings failed:", scoreResp.status);
       }
-    } catch { /* non-critical */ }
+    } catch (err) { console.warn("live-score after openings error:", err); }
 
     saveTranscript(sessionId);
     setIsAITurnInProgress(false);
-  }, [sessionStatus, sessionId, addSystemMessage, addAITranscriptEntry, speakClerk, speakAIText, prefetchTTSAudio, fetchCachedOpeningAudio, waitForSpeechComplete]);
+  }, [sessionStatus, sessionId, addSystemMessage, addAITranscriptEntry, speakClerk, speakAIText, prefetchTTSAudio, waitForSpeechComplete]);
 
   // Refresh all witness and exam state from backend
   const refreshWitnessState = useCallback(async () => {
     try {
       const data = await fetchWitnesses(sessionId);
       setWitnesses(data.witnesses);
+      setProsecutionWitnessIds(data.prosecution_witnesses || []);
+      setDefenseWitnessIds(data.defense_witnesses || []);
       setCurrentWitnessId(data.current_witness_id);
       setCurrentWitnessName(data.current_witness_name || null);
       setCaseInChief(data.case_in_chief || "prosecution");
@@ -1997,6 +2119,7 @@ export default function CourtroomPage() {
     let nextQBlob: Blob | null = null;
 
     for (let i = 0; i < pairs.length; i++) {
+      await checkPauseStop();
       const qa = pairs[i];
 
       // Sustained objection entry (no Q&A, just objection info)
@@ -2100,18 +2223,21 @@ export default function CourtroomPage() {
         nextQBlob = null;
       }
     }
-  }, [addAITranscriptEntry, speakAIText, prefetchTTSAudio, waitForSpeechComplete]);
+  }, [addAITranscriptEntry, speakAIText, prefetchTTSAudio, waitForSpeechComplete, checkPauseStop]);
 
   // Run the full automated examination flow for all witnesses in the current case-in-chief.
   const runFullExaminationFlow = useCallback(async () => {
     setIsAITurnInProgress(true);
     setAiTurnMessage("Preparing examination...");
+    trialStoppedRef.current = false;
+    trialPausedRef.current = false;
+    setTrialFlowStatus("running");
 
     const humanSide = sessionStatus?.humanRole?.includes("plaintiff") ? "plaintiff" : "defense";
 
     try {
       let witnessData = await refreshWitnessState();
-      if (!witnessData) { setIsAITurnInProgress(false); return; }
+      if (!witnessData) { setIsAITurnInProgress(false); setTrialFlowStatus("idle"); return; }
 
       const processOneSide = async (cicLabel: string, cicSide: string) => {
         const cicWitnesses = (cicLabel === "defense"
@@ -2121,9 +2247,18 @@ export default function CourtroomPage() {
           witnessData!.witnesses.find((w) => w.id === wid && w.is_pending)
         );
 
+        console.log(
+          `[Trial] processOneSide: cicLabel=${cicLabel}, cicSide=${cicSide}, ` +
+          `totalWitnesses=${cicWitnesses.length}, pendingCount=${pending.length}, ` +
+          `witnessList=${JSON.stringify(cicWitnesses)}, ` +
+          `pendingList=${JSON.stringify(pending)}`
+        );
+
         const totalForSide = cicWitnesses.length;
 
         for (let wi = 0; wi < pending.length; wi++) {
+          await checkPauseStop();
+
           const wid = pending[wi];
           const witness = witnessData!.witnesses.find((w) => w.id === wid);
           if (!witness) continue;
@@ -2203,6 +2338,7 @@ export default function CourtroomPage() {
             addSystemMessage(`[Note: Direct examination of ${witness.name} produced no questions.]`, "direct");
           }
 
+          await checkPauseStop();
           setExamStatus((prev) => ({ ...prev, direct_complete: true }));
           const directDoneText = `Direct examination complete. Cross-examination may begin.`;
           addSystemMessage(directDoneText, "cross");
@@ -2237,6 +2373,7 @@ export default function CourtroomPage() {
             addSystemMessage(`[Note: Cross examination of ${witness.name} produced no questions.]`, "cross");
           }
 
+          await checkPauseStop();
           setExamStatus((prev) => ({ ...prev, cross_complete: true }));
 
           const redirectPairs = (exam.redirect || []).filter(
@@ -2266,6 +2403,8 @@ export default function CourtroomPage() {
             await playExamQAPairs(recrossPairs, witness.name, "recross");
             setExamStatus((prev) => ({ ...prev, recross_complete: true }));
           }
+
+          await checkPauseStop();
 
           // Witness excused
           const dismissText = `${witness.name} is excused.`;
@@ -2351,22 +2490,31 @@ export default function CourtroomPage() {
 
       await refreshWitnessState();
     } catch (err) {
-      console.error("Examination flow error:", err);
       const errMsg = err instanceof Error ? err.message : "Unknown error";
-      setAiTurnMessage(`Error during examination: ${errMsg}`);
-      addSystemMessage(`Examination error: ${errMsg}. The trial will continue.`, "direct");
-      await new Promise((r) => setTimeout(r, 3000));
+      if (errMsg === "TRIAL_STOPPED") {
+        console.log("[Trial] Trial stopped by user.");
+        addSystemMessage("Trial stopped by user.", "direct");
+      } else {
+        console.error("Examination flow error:", err);
+        setAiTurnMessage(`Error during examination: ${errMsg}`);
+        addSystemMessage(`Examination error: ${errMsg}. The trial will continue.`, "direct");
+        await new Promise((r) => setTimeout(r, 3000));
+      }
     } finally {
       saveTranscript(sessionId);
       setAiTurnMessage(null);
       setIsAITurnInProgress(false);
+      setTrialFlowStatus("idle");
     }
-  }, [sessionStatus, sessionId, addSystemMessage, addAITranscriptEntry, speakAIText, speakClerk, prefetchTTSAudio, refreshWitnessState, playExamQAPairs]);
+  }, [sessionStatus, sessionId, addSystemMessage, addAITranscriptEntry, speakAIText, speakClerk, prefetchTTSAudio, refreshWitnessState, playExamQAPairs, checkPauseStop]);
 
   // NOTE: Manual examination handlers removed - examination flow is now fully automated
 
   const runClosingSequence = useCallback(async () => {
     setIsAITurnInProgress(true);
+    trialStoppedRef.current = false;
+    trialPausedRef.current = false;
+    setTrialFlowStatus("running");
 
     const prosAnnounce = "The Court calls upon the Prosecution to deliver their closing argument. Counsel, you may proceed.";
     const defAnnounce = "Thank you, Counsel. The Court now calls upon the Defense to deliver their closing argument. Defense Counsel, you may proceed.";
@@ -2422,14 +2570,19 @@ export default function CourtroomPage() {
       await waitForSpeechComplete();
     }
 
-    // Trigger live scoring after closings
+    // Trigger live scoring after closings — generates ALL scores (opening + exam + closing)
     try {
-      const scoreResp = await fetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST" });
+      const scoreResp = await apiFetch(`${API_BASE}/api/scoring/${sessionId}/live-score`, { method: "POST", headers: { "Content-Type": "application/json" } });
       if (scoreResp.ok) {
         const scoreData = await scoreResp.json();
-        if (scoreData.scores) setLiveScores((prev) => ({ ...prev, ...scoreData.scores }));
+        if (scoreData.scores) {
+          console.log("Scores after closings:", Object.keys(scoreData.scores));
+          setLiveScores((prev) => ({ ...prev, ...scoreData.scores }));
+        }
+      } else {
+        console.warn("live-score after closings failed:", scoreResp.status);
       }
-    } catch { /* non-critical */ }
+    } catch (err) { console.warn("live-score after closings error:", err); }
 
     saveTranscript(sessionId);
     setAiTurnMessage(null);
@@ -2455,7 +2608,7 @@ export default function CourtroomPage() {
         console.warn(`Phase advance to ${phase} returned:`, lastAdvanceError);
         if (result.message?.includes("Cannot transition")) {
           try {
-            const stateResp = await fetch(`${API_BASE}/api/trial/${sessionId}/state`);
+            const stateResp = await apiFetch(`${API_BASE}/api/trial/${sessionId}/state`);
             if (stateResp.ok) {
               const stateData = await stateResp.json();
               setTrialState((prev) => ({ ...prev, phase: stateData.phase as TrialPhase }));
@@ -2508,12 +2661,18 @@ export default function CourtroomPage() {
             console.error("Closing sequence error (continuing):", err);
           }
           setIsAdvancingPhase(false);
-          handleAdvancePhase("scoring");
+          await handleAdvancePhase("scoring");
           return;
         }
       } else {
         const ok = await tryAdvance(targetPhase);
         if (!ok) { setPhaseError(lastAdvanceError || `Could not advance to ${targetPhase}`); return; }
+        if (targetPhase === "scoring") {
+          try {
+            const vResp = await apiFetch(`${API_BASE}/api/scoring/${sessionId}/verdict`);
+            if (vResp.ok) { setVerdict(await vResp.json()); }
+          } catch { /* verdict is non-critical */ }
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -2634,18 +2793,18 @@ export default function CourtroomPage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+      <header className="relative z-10 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Left: Home + Phase indicator */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push("/")}
-                className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
                 title="Home"
               >
                 <HomeIcon className="w-5 h-5" />
-                <span className="hidden sm:inline text-sm">Home</span>
+                <span className="hidden sm:inline text-sm font-bold tracking-tight">MockPrep<span className="text-amber-400">AI</span></span>
               </button>
               <div className="h-8 w-px bg-slate-700" />
               <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${currentPhaseConfig.bgGradient} flex items-center justify-center shadow-lg`}>
@@ -2705,6 +2864,55 @@ export default function CourtroomPage() {
                   </button>
                 );
               })()}
+
+              {/* Trial Flow Controls: Pause / Resume / Stop + Audio toggle */}
+              {normalizedPhase !== "prep" && normalizedPhase !== "scoring" && (
+                <div className="flex items-center gap-1.5">
+                  {/* Audio on/off toggle */}
+                  <button
+                    onClick={() => setAudioEnabled((prev) => !prev)}
+                    title={audioEnabled ? "Mute audio" : "Enable audio"}
+                    className={`p-1.5 rounded-lg transition-colors ${audioEnabled ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-slate-600/40 text-slate-400 hover:bg-slate-600/60"}`}
+                  >
+                    {audioEnabled ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                    )}
+                  </button>
+
+                  {trialFlowStatus === "running" && (
+                    <button
+                      onClick={pauseTrial}
+                      title="Pause trial"
+                      className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+                    </button>
+                  )}
+                  {trialFlowStatus === "paused" && (
+                    <button
+                      onClick={resumeTrial}
+                      title="Resume trial"
+                      className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors animate-pulse"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                    </button>
+                  )}
+                  {(trialFlowStatus === "running" || trialFlowStatus === "paused") && (
+                    <button
+                      onClick={stopTrial}
+                      title="Stop trial"
+                      className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1" /></svg>
+                    </button>
+                  )}
+                  {trialFlowStatus === "paused" && (
+                    <span className="text-xs text-amber-400 font-medium ml-1">PAUSED</span>
+                  )}
+                </div>
+              )}
 
               {phaseError && (
                 <div className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center gap-2">
@@ -2851,8 +3059,29 @@ export default function CourtroomPage() {
                   onOpeningsReady={(ready) => setOpeningsReady(ready)}
                   onPrepComplete={(complete) => setPrepComplete(complete)}
                 />
-                {/* Begin Trial Button */}
-                <div className="mt-4">
+                {/* Audio Toggle + Begin Trial Button */}
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-xl">
+                    <div className="flex items-center gap-2.5">
+                      {audioEnabled ? (
+                        <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                      )}
+                      <div>
+                        <div className="text-sm font-medium text-white">Voice Audio</div>
+                        <div className="text-xs text-slate-400">
+                          {audioEnabled ? "AI voices will speak during trial" : "Text-only mode (faster)"}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setAudioEnabled((prev) => !prev)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${audioEnabled ? "bg-emerald-500" : "bg-slate-600"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${audioEnabled ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
                   <button
                     onClick={() => handleAdvancePhase("opening")}
                     disabled={isAdvancingPhase || openingsReady !== true}
@@ -2935,6 +3164,38 @@ export default function CourtroomPage() {
 
           {/* Right column: Controls */}
           <div className="lg:col-span-3 space-y-4">
+            {/* Verdict Banner — shown in scoring phase */}
+            {verdict && normalizedPhase === "scoring" && (
+              <div className="bg-gradient-to-br from-amber-900/40 via-amber-800/20 to-slate-800/50 border border-amber-500/40 rounded-2xl overflow-hidden">
+                <div className="px-4 py-4 text-center">
+                  <p className="text-xs text-amber-400 uppercase tracking-widest font-semibold mb-2">Verdict</p>
+                  <div className="flex items-center justify-center gap-4 mb-3">
+                    <div className={`text-center ${verdict.winner === "Prosecution" ? "ring-2 ring-amber-400/60 rounded-lg px-3 py-1" : "px-3 py-1"}`}>
+                      <p className="text-[10px] text-blue-400 uppercase">Prosecution</p>
+                      <p className="text-xl font-bold text-white">{verdict.prosecution_avg}</p>
+                    </div>
+                    <span className="text-slate-600 text-xs">vs</span>
+                    <div className={`text-center ${verdict.winner === "Defense" ? "ring-2 ring-amber-400/60 rounded-lg px-3 py-1" : "px-3 py-1"}`}>
+                      <p className="text-[10px] text-red-400 uppercase">Defense</p>
+                      <p className="text-xl font-bold text-white">{verdict.defense_avg}</p>
+                    </div>
+                  </div>
+                  <p className="text-amber-300 font-semibold text-sm mb-3">
+                    {verdict.winner} wins by {verdict.margin} pts
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed italic line-clamp-4">
+                    &ldquo;{verdict.verdict_text}&rdquo;
+                  </p>
+                  <button
+                    onClick={() => window.open(`/scores/${sessionId}`, "_blank")}
+                    className="mt-3 px-4 py-1.5 text-xs text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-400/50 rounded-lg transition-colors"
+                  >
+                    View Full Report
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Live Scores & Objection Counter Panel — collapsible */}
             <div className="bg-slate-800/50 backdrop-blur-sm border border-emerald-500/30 rounded-2xl overflow-hidden">
               <button
@@ -2989,7 +3250,7 @@ export default function CourtroomPage() {
                             label = s.name || "Witness";
                             sideTag = s.side || (() => {
                               const wCalledBy = witnesses.find((w) => key.includes(w.id))?.called_by;
-                              return wCalledBy === "defense" ? "Defense" : "Prosecution";
+                              return wCalledBy === "defense" ? "Defense" : wCalledBy === "either" ? "Either" : "Prosecution";
                             })();
                             roleLabel = s.witness_role || "Witness";
                           } else {
@@ -3085,7 +3346,7 @@ export default function CourtroomPage() {
                   onClick={async () => {
                     if (!teamMemoryOpen) {
                       try {
-                        const res = await fetch(`${API_BASE}/api/trial/${sessionId}/team-memory`);
+                        const res = await apiFetch(`${API_BASE}/api/trial/${sessionId}/team-memory`);
                         if (res.ok) setTeamMemory(await res.json());
                       } catch { /* non-critical */ }
                     }
@@ -3121,7 +3382,7 @@ export default function CourtroomPage() {
                     <button
                       onClick={async () => {
                         try {
-                          const res = await fetch(`${API_BASE}/api/trial/${sessionId}/team-memory`);
+                          const res = await apiFetch(`${API_BASE}/api/trial/${sessionId}/team-memory`);
                           if (res.ok) setTeamMemory(await res.json());
                         } catch { /* non-critical */ }
                       }}
@@ -3182,8 +3443,8 @@ export default function CourtroomPage() {
               </div>
             )}
 
-            {/* Speech Playback Bar */}
-            {isAISpeaking && (
+            {/* Speech Playback Bar — hidden when audio is disabled */}
+            {isAISpeaking && audioEnabled && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <VolumeIcon className="w-5 h-5 text-blue-400 animate-pulse" />
@@ -3196,32 +3457,12 @@ export default function CourtroomPage() {
                   </button>
                 </div>
 
-                {/* Progress bar */}
-                {speechDuration > 0 && (
-                  <div className="mb-3">
-                    <div
-                      className="relative w-full h-2 bg-slate-700 rounded-full cursor-pointer group"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const pct = (e.clientX - rect.left) / rect.width;
-                        handleSeek(pct * speechDuration);
-                      }}
-                    >
-                      <div
-                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all"
-                        style={{ width: `${Math.min((speechProgress / speechDuration) * 100, 100)}%` }}
-                      />
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ left: `${Math.min((speechProgress / speechDuration) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between mt-1 text-xs text-slate-500">
-                      <span>{formatTime(speechProgress)}</span>
-                      <span>{formatTime(speechDuration)}</span>
-                    </div>
-                  </div>
-                )}
+                {/* Progress bar — isolated component to avoid parent re-renders */}
+                <SpeechProgressBar
+                  progressRef={speechProgressRef}
+                  duration={speechDuration}
+                  onSeek={handleSeek}
+                />
 
                 {/* Speed controls */}
                 <div className="flex items-center gap-2">
@@ -3289,8 +3530,8 @@ export default function CourtroomPage() {
                   {/* Witness Stand & Examination Flow */}
                   {(normalizedPhase === "direct" || normalizedPhase === "cross" ||
                     normalizedPhase === "redirect" || normalizedPhase === "recross") && (() => {
-                    const prosWitnesses = witnesses.filter((w) => w.called_by === "plaintiff");
-                    const defWitnesses = witnesses.filter((w) => w.called_by === "defense");
+                    const prosWitnesses = witnesses.filter((w) => prosecutionWitnessIds.includes(w.id));
+                    const defWitnesses = witnesses.filter((w) => defenseWitnessIds.includes(w.id));
                     const currentSideWitnesses = caseInChief === "defense" ? defWitnesses : prosWitnesses;
                     const examinedCount = currentSideWitnesses.filter((w) => w.is_examined).length;
                     const totalCount = currentSideWitnesses.length;
@@ -3377,8 +3618,9 @@ export default function CourtroomPage() {
                       <div className="space-y-1">
                         <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">{cicLabel} Witnesses</div>
                         {currentSideWitnesses.map((w) => {
-                          const side = w.called_by === "defense" ? "DEF" : "PROS";
-                          const sideColor = w.called_by === "defense" ? "text-red-400" : "text-blue-400";
+                          const isOnPros = prosecutionWitnessIds.includes(w.id);
+                          const side = isOnPros ? "PROS" : "DEF";
+                          const sideColor = isOnPros ? "text-blue-400" : "text-red-400";
                           return (
                           <div
                             key={w.id}

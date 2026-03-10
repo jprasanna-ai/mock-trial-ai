@@ -29,16 +29,22 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname === "/login";
-  const isAuthCallback = request.nextUrl.pathname.startsWith("/auth/");
+  const pathname = request.nextUrl.pathname;
+  const isPublicPage =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/about" ||
+    pathname === "/contact" ||
+    pathname.startsWith("/trials") ||
+    pathname.startsWith("/auth/");
 
-  if (!user && !isLoginPage && !isAuthCallback) {
+  if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isLoginPage) {
+  if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

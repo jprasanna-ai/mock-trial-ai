@@ -154,12 +154,57 @@ class SessionData:
         self.attorney_sub_role: Optional[str] = None  # "opening", "direct_cross", "closing"
         self.initialized: bool = False
 
+        # Tracks the current side assignment for "either" witnesses.
+        # Keys: witness_id, Values: "plaintiff" or "defense".
+        # Original called_by stays "either" in case_data; this overrides for runtime.
+        self.witness_assignments: Dict[str, str] = {}
+
 
 def get_session(session_id: str) -> SessionData:
-    """Get session or raise 404."""
+    """Get session or raise 404. Attempts DB recovery if not in memory."""
     if session_id not in _sessions:
+        recovered = _try_recover_session_from_db(session_id)
+        if recovered:
+            return recovered
         raise HTTPException(status_code=404, detail="Session not found")
     return _sessions[session_id]
+
+
+def _try_recover_session_from_db(session_id: str) -> Optional[SessionData]:
+    """Attempt to recover a session from the database when not in memory.
+    
+    Also marks the session for re-initialization if it was previously initialized
+    but lost its in-memory state (e.g., server restart).
+    """
+    try:
+        session_repo = SessionRepository()
+        db_row = session_repo.get_session(session_id)
+        if not db_row:
+            return None
+
+        session = SessionData(session_id)
+        session.case_id = db_row.get("case_id")
+
+        hr = db_row.get("human_role")
+        if hr:
+            try:
+                session.human_role = Role(hr)
+            except (ValueError, KeyError):
+                pass
+
+        asr = db_row.get("attorney_sub_role")
+        if asr:
+            session.attorney_sub_role = asr
+
+        _sessions[session_id] = session
+        logger.info(f"Recovered session {session_id} from DB (case_id={session.case_id}, human_role={hr})")
+
+        # Mark that this session needs re-initialization (agents lost on restart)
+        session._needs_reinit = True
+        return session
+    except Exception as e:
+        logger.debug(f"Could not recover session {session_id} from DB: {e}")
+        return None
 
 
 # =============================================================================
@@ -307,6 +352,7 @@ async def create_session(
         db_session = session_repo.create_session(
             session_id=session_id,
             case_id=request.case_id,
+            human_role=request.human_role if hasattr(request, "human_role") else None,
         )
         logger.info(f"Session {session_id} persisted to database")
     except Exception as e:
@@ -373,6 +419,7 @@ def _ensure_case_embeddings(case_id: str, case_data: dict):
                 case_id=case_id,
                 name=case_data.get("case_name", case_id),
                 source_type="session",
+                source_filename="session_load",
             )
             case.facts = case_data.get("facts", [])
             case.witnesses = case_data.get("witnesses", [])
@@ -407,6 +454,31 @@ def _ensure_case_embeddings(case_id: str, case_data: dict):
         logger.warning(f"Could not trigger embeddings for {case_id}: {e}")
 
 
+def _enrich_attorney_from_prep(agent, prep: Dict):
+    """Extract key_evidence and witness_goals from prep into persona fields."""
+    agent.persona.prep_materials = prep
+    if not agent.persona.key_evidence:
+        evidence = prep.get("evidence_to_highlight") or prep.get("key_evidence") or []
+        if isinstance(evidence, list):
+            agent.persona.key_evidence = evidence[:10]
+    if not agent.persona.witness_goals:
+        goals = {}
+        for plan in (prep.get("direct_exam_plans") or []):
+            wname = plan.get("witness_name") or plan.get("name", "")
+            goal = plan.get("goals") or plan.get("goal", "")
+            if wname and goal:
+                goals[wname] = goal if isinstance(goal, str) else "; ".join(goal)
+        for plan in (prep.get("cross_exam_plans") or []):
+            wname = plan.get("witness_name") or plan.get("name", "")
+            goal = plan.get("goals") or plan.get("goal", "")
+            if wname and goal:
+                existing = goals.get(wname, "")
+                cross_str = goal if isinstance(goal, str) else "; ".join(goal)
+                goals[wname] = f"{existing}; Cross: {cross_str}" if existing else f"Cross: {cross_str}"
+        if goals:
+            agent.persona.witness_goals = goals
+
+
 def _load_and_inject_agent_prep(session: SessionData):
     """Bulk-load all agent prep for the case (single DB query + file cache) and inject."""
     if not session.case_id:
@@ -427,14 +499,14 @@ def _load_and_inject_agent_prep(session: SessionData):
     for team_key, agent in session.attorney_team.items():
         prep = all_prep.get(team_key)
         if prep:
-            agent.persona.prep_materials = prep
+            _enrich_attorney_from_prep(agent, prep)
             injected.append(team_key)
 
     for side, agent in session.attorneys.items():
         key = f"{side}_direct_cross"
         prep = all_prep.get(key)
         if prep:
-            agent.persona.prep_materials = prep
+            _enrich_attorney_from_prep(agent, prep)
             if key not in injected:
                 injected.append(key)
 
@@ -536,7 +608,7 @@ async def _ensure_agent_prep_generated(session: "SessionData"):
         if role_type == "attorney":
             agent = session.attorney_team.get(key) or session.attorneys.get(key.split("_")[0])
             if agent:
-                agent.persona.prep_materials = result
+                _enrich_attorney_from_prep(agent, result)
         elif role_type == "witness":
             wid = key.replace("witness_", "", 1)
             agent = session.witnesses.get(wid)
@@ -615,23 +687,67 @@ async def initialize_session(session_id: str):
         cd = session.case_data
         if not cd or not cd.get("case_name"):
             return "The evidence supports our position."
-        
+
         case_name = cd.get("case_name", "")
         charge = cd.get("charge", "")
         summary = cd.get("summary", cd.get("description", ""))
-        
+
         if side == "plaintiff":
             if charge:
-                return (f"In {case_name}, the prosecution will prove beyond reasonable doubt "
-                        f"that the defendant committed {charge}. {summary}")
-            return (f"In {case_name}, the plaintiff will demonstrate by a preponderance of "
-                    f"the evidence that the defendant is liable. {summary}")
+                theory = (f"In {case_name}, the prosecution will prove beyond reasonable doubt "
+                          f"that the defendant committed {charge}. {summary}")
+            else:
+                theory = (f"In {case_name}, the plaintiff will demonstrate by a preponderance of "
+                          f"the evidence that the defendant is liable. {summary}")
         else:
             if charge:
-                return (f"In {case_name}, the defense will show that the prosecution has failed "
-                        f"to prove {charge} beyond a reasonable doubt. {summary}")
-            return (f"In {case_name}, the defense will demonstrate that the plaintiff has not "
-                    f"met their burden of proof. {summary}")
+                theory = (f"In {case_name}, the defense will show that the prosecution has failed "
+                          f"to prove {charge} beyond a reasonable doubt. {summary}")
+            else:
+                theory = (f"In {case_name}, the defense will demonstrate that the plaintiff has not "
+                          f"met their burden of proof. {summary}")
+
+        facts = cd.get("facts", [])
+        if facts:
+            fact_lines = []
+            for f in facts[:10]:
+                text = f.get("content", str(f)) if isinstance(f, dict) else str(f)
+                fact_lines.append(f"- {text}")
+            theory += "\n\nKEY FACTS:\n" + "\n".join(fact_lines)
+
+        witnesses = cd.get("witnesses", [])
+        own = "plaintiff" if side == "plaintiff" else "defense"
+        own_ws = []
+        opp_ws = []
+        for w in witnesses:
+            cb = w.get("called_by", "").lower()
+            wid = w.get("id", "")
+            if cb == "either":
+                assigned = session.witness_assignments.get(wid, "plaintiff")
+                if assigned == own:
+                    own_ws.append(w)
+                else:
+                    opp_ws.append(w)
+            elif cb in (own, "prosecution") if own == "plaintiff" else cb == own:
+                own_ws.append(w)
+            elif cb and cb not in ("unknown", ""):
+                opp_ws.append(w)
+        if own_ws:
+            theory += f"\n\nYOUR WITNESSES ({len(own_ws)}):\n"
+            for w in own_ws:
+                theory += f"- {w.get('name', '?')}: {w.get('role_description', '')}\n"
+        if opp_ws:
+            theory += f"\nOPPOSING WITNESSES ({len(opp_ws)}):\n"
+            for w in opp_ws:
+                theory += f"- {w.get('name', '?')}: {w.get('role_description', '')}\n"
+
+        exhibits = cd.get("exhibits", [])
+        if exhibits:
+            theory += f"\nKEY EXHIBITS ({len(exhibits)}):\n"
+            for e in exhibits[:8]:
+                theory += f"- {e.get('title', e.get('id', '?'))}: {e.get('description', '')[:80]}\n"
+
+        return theory
 
     is_spectator = session.human_role == Role.SPECTATOR
 
@@ -767,6 +883,28 @@ async def initialize_session(session_id: str):
                 fact_lines.append(str(f))
         _case_facts_summary = "\n".join(f"- {fl}" for fl in fact_lines)
 
+    import random
+    either_witnesses = [
+        w for w in case_witnesses
+        if _resolve_called_by(w.get("name", ""), w.get("called_by", "unknown")) == "either"
+    ]
+    # Randomly split "either" witnesses roughly evenly between sides
+    if either_witnesses:
+        shuffled = list(either_witnesses)
+        random.shuffle(shuffled)
+        half = len(shuffled) // 2
+        for idx, w in enumerate(shuffled):
+            wid = w.get("id", "")
+            assigned = "plaintiff" if idx < half else "defense"
+            # Use pre-existing assignment if the user already changed it
+            if wid not in session.witness_assignments:
+                session.witness_assignments[wid] = assigned
+        logger.info(
+            f"Either-witness assignments: "
+            + ", ".join(f"{w.get('name','?')}→{session.witness_assignments.get(w.get('id',''))}"
+                        for w in either_witnesses)
+        )
+
     for i, witness_data in enumerate(case_witnesses):
         witness_id = witness_data.get("id", str(uuid.uuid4()))
         raw_called_by = witness_data.get("called_by", "unknown")
@@ -774,10 +912,13 @@ async def initialize_session(session_id: str):
             witness_data.get("name", ""),
             raw_called_by,
         )
-        # Normalise to plaintiff/defense for agent creation.
-        # "prosecution", "plaintiff", "either", "unknown" all default to plaintiff
-        # to match _resolve_witness_side in persona.py.
-        agent_side = "defense" if called_by == "defense" else "plaintiff"
+        # For "either" witnesses, use the random (or user-chosen) assignment
+        if called_by == "either" and witness_id in session.witness_assignments:
+            agent_side = session.witness_assignments[witness_id]
+        elif called_by == "defense":
+            agent_side = "defense"
+        else:
+            agent_side = "plaintiff"
 
         # Match persona config by index within side
         if agent_side == "plaintiff":
@@ -914,6 +1055,13 @@ async def initialize_session(session_id: str):
                 )
                 break  # One case theory per side is enough
 
+    # Populate witness calling restrictions on trial state so they are
+    # enforced when witnesses are actually called to the stand.
+    wcr = session.case_data.get("witness_calling_restrictions", {})
+    if wcr:
+        session.trial_state.witness_calling_restrictions = wcr
+        logger.info(f"Loaded witness calling restrictions: {wcr}")
+
     session.initialized = True
     
     return {
@@ -996,14 +1144,19 @@ async def load_case(
     
     Per SPEC.md Section 4: Case selection is step 1 of trial lifecycle.
     """
-    from ..data import get_demo_case_by_id
+    from ..data import get_demo_case_by_id, get_uploaded_case
     from .case import _cases as uploaded_cases
     
     session = get_session(session_id)
     case_loaded = False
-    
-    # First, try to load from demo cases
+
+    # Clear stale prep materials from any previously loaded case
+    session.prep_materials = {}
+
+    # First, try to load from demo/uploaded cases (includes DB-backed uploaded_cases)
     demo_case = get_demo_case_by_id(request.case_id)
+    if not demo_case:
+        demo_case = get_uploaded_case(request.case_id)
     if demo_case:
         session.case_id = demo_case["id"]
         session.case_data = _build_full_case_data(demo_case)
@@ -1054,31 +1207,32 @@ async def load_case(
             db_case = case_repo.get_case(request.case_id)
             
             if db_case:
-                session.case_id = db_case.id
+                _g = (lambda obj, k, d=None: obj.get(k, d) if isinstance(obj, dict) else getattr(obj, k, d))
+                session.case_id = _g(db_case, "id", request.case_id)
                 db_source = {
-                    "case_id": db_case.id,
-                    "case_name": db_case.title,
-                    "description": db_case.description,
-                    "facts": db_case.facts or [],
-                    "exhibits": db_case.exhibits or [],
+                    "case_id": _g(db_case, "id", request.case_id),
+                    "case_name": _g(db_case, "title", ""),
+                    "description": _g(db_case, "description", ""),
+                    "facts": _g(db_case, "facts") or [],
+                    "exhibits": _g(db_case, "exhibits") or [],
                 }
                 
                 witnesses = case_repo.get_witnesses(request.case_id)
                 db_source["witnesses"] = [
                     {
-                        "id": w.id,
-                        "name": w.name,
-                        "called_by": w.called_by,
-                        "affidavit": w.affidavit,
-                        "witness_type": w.witness_type,
-                        "default_persona": w.default_persona,
+                        "id": _g(w, "id", ""),
+                        "name": _g(w, "name", ""),
+                        "called_by": _g(w, "called_by", ""),
+                        "affidavit": _g(w, "affidavit", ""),
+                        "witness_type": _g(w, "witness_type", ""),
+                        "default_persona": _g(w, "default_persona", ""),
                     }
                     for w in witnesses
                 ]
                 
                 session.case_data = _build_full_case_data(db_source)
                 session.trial_state.case_loaded = True
-                session.trial_state.witnesses_to_examine = [w.id for w in witnesses]
+                session.trial_state.witnesses_to_examine = [_g(w, "id", "") for w in witnesses]
                 
                 logger.info(f"Case {request.case_id} loaded from database for session {session_id}")
                 case_loaded = True
@@ -1222,7 +1376,12 @@ async def initialize_agents(
     # Configure TTS voices for agents
     if session.tts:
         tts_session = session.tts.create_session(session_id)
-    
+
+    # Populate witness calling restrictions on trial state
+    wcr = session.case_data.get("witness_calling_restrictions", {})
+    if wcr:
+        session.trial_state.witness_calling_restrictions = wcr
+
     session.initialized = True
     session.trial_state.personas_configured = True
     
@@ -1363,6 +1522,125 @@ async def get_agents(session_id: str):
     }
 
 
+class ReassignWitnessRequest(BaseModel):
+    witness_id: str
+    new_side: str  # "plaintiff" or "defense"
+
+
+@router.post("/{session_id}/reassign-witness")
+async def reassign_witness(session_id: str, request: ReassignWitnessRequest):
+    """Reassign an 'either' witness to prosecution or defense.
+
+    Only works for witnesses whose original called_by is 'either'.
+    Recreates the witness agent with the new side and invalidates cached prep.
+    """
+    from .preparation import (
+        _save_agent_prep, _get_cached_agent_prep,
+        _normalize_called_by, generate_witness_outline,
+        save_materials_to_db,
+    )
+    session = get_session(session_id)
+
+    if request.new_side not in ("plaintiff", "defense"):
+        raise HTTPException(status_code=400, detail="new_side must be 'plaintiff' or 'defense'")
+
+    case_witnesses = session.case_data.get("witnesses", [])
+    witness_data = None
+    for w in case_witnesses:
+        if w.get("id") == request.witness_id:
+            witness_data = w
+            break
+    if not witness_data:
+        raise HTTPException(status_code=404, detail="Witness not found in case data")
+
+    raw_cb = _normalize_called_by(witness_data.get("called_by", ""))
+    if raw_cb != "either":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only 'either' witnesses can be reassigned. This witness is '{raw_cb}'."
+        )
+
+    old_side = session.witness_assignments.get(request.witness_id, "plaintiff")
+    if old_side == request.new_side:
+        return {"status": "no_change", "message": f"Witness already assigned to {request.new_side}"}
+
+    # Update the assignment
+    session.witness_assignments[request.witness_id] = request.new_side
+    logger.info(f"Reassigned witness {witness_data.get('name')} from {old_side} to {request.new_side}")
+
+    # Recreate the witness agent with the new side
+    existing_agent = session.witnesses.get(request.witness_id)
+    if existing_agent:
+        from ..agents.witness import create_witness_agent, WitnessType, Demeanor
+        agent = create_witness_agent(
+            name=existing_agent.persona.name,
+            witness_id=request.witness_id,
+            affidavit=existing_agent.persona.affidavit,
+            called_by=request.new_side,
+            witness_type=existing_agent.persona.witness_type,
+            demeanor=existing_agent.persona.demeanor,
+            nervousness=existing_agent.persona.nervousness,
+            difficulty=existing_agent.persona.difficulty,
+            role_description=existing_agent.persona.role_description,
+        )
+        session.witnesses[request.witness_id] = agent
+
+    # Update witness lists in trial state
+    state = session.trial_state
+    if request.new_side == "defense":
+        if request.witness_id in state.prosecution_witnesses:
+            state.prosecution_witnesses.remove(request.witness_id)
+        if request.witness_id not in state.defense_witnesses:
+            state.defense_witnesses.append(request.witness_id)
+    else:
+        if request.witness_id in state.defense_witnesses:
+            state.defense_witnesses.remove(request.witness_id)
+        if request.witness_id not in state.prosecution_witnesses:
+            state.prosecution_witnesses.append(request.witness_id)
+
+    # Regenerate witness prep with the new side alignment
+    case_id = session.case_id
+    if case_id:
+        is_friendly = True  # now friendly to their assigned side
+        side_label = "Prosecution" if request.new_side == "plaintiff" else "Defense"
+
+        try:
+            case_summary = session.case_data.get("summary", session.case_data.get("description", ""))
+            outline = await generate_witness_outline(
+                witness_name=witness_data.get("name", "Unknown"),
+                witness_role=witness_data.get("role_description", "Witness"),
+                called_by=side_label,
+                is_friendly=is_friendly,
+                affidavit_excerpt=witness_data.get("affidavit", "")[:800],
+                case_context=case_summary[:500] if case_summary else "",
+            )
+            if outline:
+                if not session.prep_materials.get("witness_outlines"):
+                    session.prep_materials["witness_outlines"] = {}
+                session.prep_materials["witness_outlines"][request.witness_id] = outline
+                save_materials_to_db(case_id, session.prep_materials or {})
+
+                # Regenerate per-agent prep
+                from .preparation import _generate_witness_prep
+                agent_prep = await _generate_witness_prep(session.case_data, witness_data)
+                if agent_prep:
+                    _save_agent_prep(case_id, f"witness_{request.witness_id}", "witness", agent_prep)
+                    new_agent = session.witnesses.get(request.witness_id)
+                    if new_agent:
+                        new_agent.persona.prep_materials = agent_prep
+        except Exception as e:
+            logger.warning(f"Prep regeneration failed for witness {request.witness_id}: {e}")
+
+    return {
+        "status": "reassigned",
+        "witness_id": request.witness_id,
+        "witness_name": witness_data.get("name"),
+        "old_side": old_side,
+        "new_side": request.new_side,
+        "message": f"Witness reassigned to {request.new_side}. Prep materials regenerated.",
+    }
+
+
 @router.get("/{session_id}/case-materials")
 async def get_case_materials(session_id: str):
     """Get all case materials for preparation - facts, witnesses, exhibits."""
@@ -1373,23 +1651,24 @@ async def get_case_materials(session_id: str):
     
     case_data = session.case_data or {}
     
-    # Format witnesses with useful info for display
-    # Use the live session agents when available, so the displayed side
-    # matches how they were actually assigned during initialization.
+    # Format witnesses — always use the original called_by from case data
+    # so "either" witnesses display correctly. Agents need plaintiff/defense
+    # internally for trial mechanics, but the UI should show the parsed value.
     witnesses = []
     for w in case_data.get("witnesses", []):
         wid = w.get("id")
         raw_cb = (w.get("called_by") or "unknown").lower()
-        # If there's a live witness agent, use its called_by (already normalized)
-        if wid and hasattr(session, "witnesses") and wid in session.witnesses:
-            agent_cb = getattr(session.witnesses[wid].persona, "called_by", None)
-            normalized_cb = agent_cb if agent_cb else ("plaintiff" if raw_cb in ("plaintiff", "prosecution", "either") else raw_cb)
-        else:
-            normalized_cb = "plaintiff" if raw_cb in ("plaintiff", "prosecution", "either") else raw_cb
+        if raw_cb == "prosecution":
+            raw_cb = "plaintiff"
+        # For "either" witnesses, include the currently assigned side
+        assigned_side = None
+        if raw_cb == "either":
+            assigned_side = session.witness_assignments.get(wid, "plaintiff")
         witnesses.append({
             "id": wid,
             "name": w.get("name"),
-            "called_by": normalized_cb,
+            "called_by": raw_cb,
+            "assigned_side": assigned_side,
             "role_description": w.get("role_description", ""),
             "affidavit": w.get("affidavit", ""),
             "key_facts": w.get("key_facts", [])

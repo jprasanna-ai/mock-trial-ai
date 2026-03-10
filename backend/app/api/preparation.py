@@ -28,11 +28,13 @@ from .session import get_session
 
 
 def _normalize_called_by(raw: str) -> str:
-    """Map prosecution/either/plaintiff variants to 'plaintiff' for consistency."""
+    """Normalise called_by: prosecution→plaintiff, keep either/defense as-is."""
     val = (raw or "unknown").lower().strip()
-    if val in ("plaintiff", "prosecution", "either"):
+    if val == "prosecution":
         return "plaintiff"
-    return val
+    if val in ("plaintiff", "defense", "either"):
+        return val
+    return "unknown"
 
 # Try to import Supabase repository, fall back to in-memory if not available
 try:
@@ -87,7 +89,6 @@ class PrepMaterials(BaseModel):
     witness_outlines: List[WitnessOutline] = []
     objection_playbook: Optional[ObjectionPlaybook] = None
     cross_exam_traps: List[CrossExamTrap] = []
-    amta_rules: List[str] = []
     generation_status: Dict[str, str] = {}
 
 
@@ -239,7 +240,6 @@ def load_materials_from_file(case_id: str) -> Optional[Dict[str, Any]]:
                     },
                     "objection_playbook": data.get("objection_playbook"),
                     "cross_exam_traps": data.get("cross_exam_traps") or [],
-                    "amta_rules": get_amta_rules(),
                     "is_complete": data.get("is_complete", False),
                     "generation_status": data.get("generation_status") or {},
                 }
@@ -328,7 +328,7 @@ def get_cached_materials_from_db(case_id: str) -> Optional[Dict[str, Any]]:
                     },
                     "objection_playbook": raw.get("objection_playbook"),
                     "cross_exam_traps": raw.get("cross_exam_traps") or [],
-                    "amta_rules": get_amta_rules(),
+                    "user_notes": raw.get("user_notes") or {},
                     "is_complete": raw.get("is_complete", False),
                     "generation_status": raw.get("generation_status") or {},
                 }
@@ -364,17 +364,44 @@ def get_cached_materials_from_db(case_id: str) -> Optional[Dict[str, Any]]:
         merged["cross_exam_traps"] = file_data["cross_exam_traps"]
         needs_db_update = True
 
-    # If file had fields that DB was missing, sync them back to DB
+    # If file had fields that DB was missing, sync ALL back to DB
     if needs_db_update and repo:
         try:
+            witness_list = []
+            for wid, outline in (merged.get("witness_outlines") or {}).items():
+                if outline:
+                    if hasattr(outline, "dict"):
+                        witness_list.append(outline.dict())
+                    elif isinstance(outline, dict):
+                        witness_list.append(outline)
+
+            playbook = merged.get("objection_playbook")
+            if playbook and hasattr(playbook, "dict"):
+                playbook = playbook.dict()
+
+            traps = []
+            for trap in (merged.get("cross_exam_traps") or []):
+                if hasattr(trap, "dict"):
+                    traps.append(trap.dict())
+                elif isinstance(trap, dict):
+                    traps.append(trap)
+
             repo.upsert(
                 case_id,
+                case_brief=merged.get("case_brief"),
+                theory_plaintiff=merged.get("theory_plaintiff"),
+                theory_defense=merged.get("theory_defense"),
                 opening_plaintiff=merged.get("opening_plaintiff"),
                 opening_defense=merged.get("opening_defense"),
+                witness_outlines=witness_list if witness_list else None,
+                objection_playbook=playbook,
+                cross_exam_traps=traps if traps else None,
                 is_complete=merged.get("is_complete", False),
+                generation_status=merged.get("generation_status", {}),
             )
-        except Exception:
-            pass
+            logger.info(f"Synced file cache back to DB for case {case_id}")
+        except Exception as e:
+            logger.warning(f"Failed to sync file→DB for {case_id}: {e}")
 
     return merged
 
@@ -449,7 +476,6 @@ def get_cached_materials(session) -> Dict[str, Any]:
             "witness_outlines": {},
             "objection_playbook": None,
             "cross_exam_traps": [],
-            "amta_rules": get_amta_rules(),
         }
     return session.prep_materials
 
@@ -568,15 +594,26 @@ async def generate_theory(
     
     witness_text = ""
     if witnesses:
-        side_witnesses = [w for w in witnesses if _normalize_called_by(w.get("called_by", "")) == side]
-        opposing_witnesses = [w for w in witnesses if _normalize_called_by(w.get("called_by", "")) != side]
-        
-        witness_text = f"\n\n{side.upper()} WITNESSES:\n"
-        for w in side_witnesses[:3]:
+        own_side = "plaintiff" if side == "plaintiff" else "defense"
+        opp_side = "defense" if side == "plaintiff" else "plaintiff"
+        side_witnesses = [w for w in witnesses
+                          if _normalize_called_by(w.get("called_by", "")) in (own_side, "either")]
+        opposing_witnesses = [w for w in witnesses
+                              if _normalize_called_by(w.get("called_by", "")) == opp_side]
+        either_witnesses = [w for w in witnesses
+                            if _normalize_called_by(w.get("called_by", "")) == "either"]
+
+        witness_text = f"\n\nYOUR WITNESSES (may call on direct):\n"
+        for w in side_witnesses:
             witness_text += f"- {w.get('name')}: {w.get('role_description', '')}\n"
-        
-        witness_text += f"\nOPPOSING WITNESSES:\n"
-        for w in opposing_witnesses[:3]:
+
+        if either_witnesses:
+            witness_text += f"\nEITHER-SIDE WITNESSES (callable by both sides):\n"
+            for w in either_witnesses:
+                witness_text += f"- {w.get('name')}: {w.get('role_description', '')}\n"
+
+        witness_text += f"\nOPPOSING WITNESSES (will cross-examine):\n"
+        for w in opposing_witnesses:
             witness_text += f"- {w.get('name')}: {w.get('role_description', '')}\n"
     
     side_label = "PROSECUTION" if side == "plaintiff" else "DEFENSE"
@@ -651,12 +688,20 @@ async def generate_witness_outline(
     witness_name: str, 
     witness_role: str, 
     called_by: str, 
-    is_friendly: bool,
+    is_friendly: Optional[bool],
     affidavit_excerpt: str = "",
     case_context: str = ""
 ) -> Dict:
     """Generate detailed examination outline for one witness."""
-    relationship = "YOUR witness (direct examination focus)" if is_friendly else "OPPOSING witness (cross-examination focus)"
+    if is_friendly is None:
+        relationship = (
+            "EITHER-SIDE witness — callable by BOTH sides. "
+            "Prepare equally strong direct AND cross examination strategies"
+        )
+    elif is_friendly:
+        relationship = "YOUR witness (direct examination focus)"
+    else:
+        relationship = "OPPOSING witness (cross-examination focus)"
     
     prompt = f"""Create detailed examination strategies for {witness_name}.
 
@@ -964,8 +1009,8 @@ Provide JSON only (all values must be strings, not arrays):
         raise
 
 
-def get_amta_rules() -> List[str]:
-    """Return AMTA rules (static content)."""
+def get_mock_trial_rules() -> List[str]:
+    """Return generic mock trial rules (static content)."""
     return [
         "TIME LIMITS: Strict time limits apply to each phase. Opening/Closing statements have set durations.",
         "WITNESS BOUND: Witnesses must testify consistent with their affidavit. Material facts cannot be invented.",
@@ -1020,15 +1065,15 @@ async def get_prep_materials(session_id: str, force_regenerate: bool = False):
         witness_outlines=witness_outlines,
         objection_playbook=cache.get("objection_playbook"),
         cross_exam_traps=cache.get("cross_exam_traps") or [],
-        amta_rules=cache.get("amta_rules") or get_amta_rules(),
         generation_status=status
     )
     
+    case_witness_count = len((session.case_data or {}).get("witnesses", []))
     has_all_fields = all([
         cache.get("case_brief"),
         cache.get("theory_plaintiff"),
         cache.get("theory_defense"),
-        len(cache.get("witness_outlines", {})) > 0,
+        len(cache.get("witness_outlines", {})) > 0 or case_witness_count == 0,
         cache.get("objection_playbook"),
     ])
     is_complete = is_complete_from_db or has_all_fields
@@ -1048,13 +1093,20 @@ async def get_prep_materials(session_id: str, force_regenerate: bool = False):
     # Include canonical witness and exhibit lists from case data so the
     # frontend can display a consistent list across all views.
     case_witnesses = []
+    witness_assignments = getattr(session, "witness_assignments", {})
     for w in (session.case_data or {}).get("witnesses", []):
-        case_witnesses.append({
-            "id": w.get("id"),
+        raw_cb = _normalize_called_by(w.get("called_by", ""))
+        wid = w.get("id", "")
+        entry = {
+            "id": wid,
             "name": w.get("name"),
-            "called_by": _normalize_called_by(w.get("called_by", "")),
+            "called_by": raw_cb,
             "role_description": w.get("role_description", ""),
-        })
+        }
+        if raw_cb == "either":
+            entry["assigned_side"] = witness_assignments.get(wid, "plaintiff")
+            entry["is_reassignable"] = True
+        case_witnesses.append(entry)
 
     case_exhibits = []
     for e in (session.case_data or {}).get("exhibits", []):
@@ -1171,10 +1223,22 @@ async def generate_prep_materials(
                 status[f"witness_{wid}"] = "generating"
                 try:
                     norm_cb = _normalize_called_by(witness.get("called_by", ""))
-                    is_friendly = (
-                        (norm_cb == "plaintiff" and is_plaintiff) or
-                        (norm_cb == "defense" and not is_plaintiff)
-                    )
+                    if norm_cb == "either":
+                        # Use the session's assignment for "either" witnesses
+                        assigned = getattr(session, "witness_assignments", {}).get(wid)
+                        if assigned:
+                            is_friendly = (
+                                (assigned == "plaintiff" and is_plaintiff) or
+                                (assigned == "defense" and not is_plaintiff)
+                            )
+                            norm_cb = assigned
+                        else:
+                            is_friendly = None
+                    else:
+                        is_friendly = (
+                            (norm_cb == "plaintiff" and is_plaintiff) or
+                            (norm_cb == "defense" and not is_plaintiff)
+                        )
                     
                     # Get affidavit excerpt for context
                     affidavit = witness.get("affidavit", "")
@@ -1231,7 +1295,18 @@ async def generate_prep_materials(
     # Generate cross-exam traps
     if section in [None, "traps"] and (force or not cache.get("cross_exam_traps")):
         is_plaintiff = "plaintiff" in human_role
-        adverse_witnesses = [w for w in witnesses if _normalize_called_by(w.get("called_by", "")) != ("plaintiff" if is_plaintiff else "defense")]
+        own_side = "plaintiff" if is_plaintiff else "defense"
+        witness_assignments = getattr(session, "witness_assignments", {})
+        adverse_witnesses = []
+        for w in witnesses:
+            cb = _normalize_called_by(w.get("called_by", ""))
+            wid = w.get("id", "")
+            if cb == "either":
+                assigned = witness_assignments.get(wid, "plaintiff")
+                if assigned != own_side:
+                    adverse_witnesses.append(w)
+            elif cb != own_side:
+                adverse_witnesses.append(w)
         traps = []
         
         for witness in adverse_witnesses[:2]:  # Limit to 2 traps
@@ -1263,11 +1338,12 @@ async def generate_prep_materials(
     # The frontend calls ensureOpeningsGenerated() separately.
     
     # Check if generation is complete
+    case_witness_count = len((session.case_data or {}).get("witnesses", []))
     is_complete = all([
         cache.get("case_brief"),
         cache.get("theory_plaintiff"),
         cache.get("theory_defense"),
-        len(cache.get("witness_outlines", {})) > 0,
+        len(cache.get("witness_outlines", {})) > 0 or case_witness_count == 0,
         cache.get("objection_playbook"),
     ])
     
@@ -1619,11 +1695,12 @@ async def update_prep_material(session_id: str, request: UpdateMaterialRequest):
             )
         
         # Check completeness
+        case_witness_count = len((session.case_data or {}).get("witnesses", []))
         is_complete = all([
             cache.get("case_brief"),
             cache.get("theory_plaintiff"),
             cache.get("theory_defense"),
-            len(cache.get("witness_outlines", {})) > 0,
+            len(cache.get("witness_outlines", {})) > 0 or case_witness_count == 0,
             cache.get("objection_playbook"),
         ])
         
@@ -2341,24 +2418,32 @@ def _load_all_agent_prep_for_case(case_id: str) -> Dict[str, Dict[str, Any]]:
         except Exception as e:
             logger.warning(f"DB bulk load failed for case {case_id}: {e}")
 
-    # 2. Fill gaps from local JSON file cache
+    # 2. Fill gaps from local JSON file cache and sync back to DB
+    db_keys = set(result.keys())
     safe_case = case_id.replace("/", "_").replace("\\", "_")
     case_dir = os.path.join(_PREP_DIR, safe_case)
+    file_only_keys: List[str] = []
     if os.path.isdir(case_dir):
         for fname in os.listdir(case_dir):
             if not fname.endswith(".json"):
                 continue
-            key = fname[:-5]  # strip .json
+            key = fname[:-5]
             if key in result:
                 continue
             content = _read_file_cache(case_id, key)
             if content:
                 result[key] = content
                 _agent_prep_cache[f"{case_id}:{key}"] = content
-        if result:
-            file_only = [k for k in result if f"{case_id}:{k}" not in _agent_prep_cache or k not in [r.get("agent_key") for r in (rows if 'rows' in dir() else [])]]
-            if file_only:
-                logger.info(f"Loaded {len(file_only)} agent preps from file cache for case {case_id}")
+                if key not in db_keys:
+                    file_only_keys.append(key)
+        if file_only_keys and repo:
+            for key in file_only_keys:
+                try:
+                    role_type = "attorney" if "attorney" in key else ("witness" if "witness" in key else "judge")
+                    repo.upsert(case_id, key, role_type, result[key])
+                except Exception:
+                    pass
+            logger.info(f"Synced {len(file_only_keys)} agent preps from file→DB for case {case_id}")
 
     # 3. Check in-memory cache for anything else
     prefix = f"{case_id}:"
@@ -2777,12 +2862,35 @@ async def get_all_agent_prep(session_id: str):
                 if att:
                     result[key]["agent_name"] = att.persona.name
                     result[key]["side"] = "Prosecution" if side == "plaintiff" else "Defense"
+    case_witness_map = {
+        w.get("id"): w for w in (session.case_data or {}).get("witnesses", [])
+    }
+    witness_assignments = getattr(session, "witness_assignments", {})
     for wid, w_agent in session.witnesses.items():
         wkey = f"witness_{wid}"
         if wkey in result:
             result[wkey]["agent_name"] = w_agent.persona.name
-            cb = _normalize_called_by(getattr(w_agent.persona, "called_by", None) or "")
-            result[wkey]["side"] = "Prosecution" if cb == "plaintiff" else "Defense"
+            raw_cb = _normalize_called_by(
+                (case_witness_map.get(wid) or {}).get("called_by", "")
+                or getattr(w_agent.persona, "called_by", "") or ""
+            )
+            is_either = raw_cb == "either"
+            assigned = witness_assignments.get(wid) if is_either else None
+            if is_either and assigned:
+                result[wkey]["side"] = "Prosecution" if assigned == "plaintiff" else "Defense"
+                result[wkey]["original_side"] = "Either"
+                result[wkey]["assigned_side"] = assigned
+                result[wkey]["is_reassignable"] = True
+            elif is_either:
+                result[wkey]["side"] = "Either"
+                result[wkey]["original_side"] = "Either"
+                result[wkey]["is_reassignable"] = True
+            elif raw_cb == "defense":
+                result[wkey]["side"] = "Defense"
+                result[wkey]["is_reassignable"] = False
+            else:
+                result[wkey]["side"] = "Prosecution"
+                result[wkey]["is_reassignable"] = False
     if "judge" in result and session.judges:
         result["judge"]["agent_name"] = session.judges[0].persona.name
 
@@ -2841,3 +2949,37 @@ async def regenerate_agent_prep(session_id: str, agent_key: str):
 
     _save_agent_prep(session.case_id, agent_key, role_type, content)
     return {"agent_key": agent_key, "prep_content": content, "is_generated": True}
+
+
+@router.get("/mock-trial-rules")
+async def get_rules():
+    """Return generic mock trial rules (not session-specific)."""
+    return {"rules": get_mock_trial_rules()}
+
+
+@router.post("/coach-general")
+async def coach_general(request: dict):
+    """General mock trial coaching chat without a specific case/session."""
+    message = request.get("message", "")
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required")
+
+    from ..services.llm_service import call_llm_async
+
+    system_prompt = (
+        "You are an experienced mock trial coach. Answer questions about "
+        "trial strategy, objections, witness examination techniques, courtroom "
+        "procedure, and mock trial competition rules. Be concise and practical. "
+        "Give specific, actionable advice."
+    )
+    try:
+        response = await call_llm_async(
+            system_prompt=system_prompt,
+            user_prompt=message,
+            max_tokens=600,
+            temperature=0.6,
+        )
+        return {"response": response}
+    except Exception as e:
+        logger.error(f"General coach error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get coach response")

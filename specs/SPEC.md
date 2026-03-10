@@ -175,3 +175,75 @@ For each witness:
 - Transcripts are saved progressively to Supabase Storage during the trial
 - Users can review past trial transcripts at `/history`
 - Transcripts are grouped by case name and show date, role, and phases completed
+
+---
+
+## 8. Either-Side Witness Assignment
+
+- Witnesses with `called_by: "either"` are randomly assigned to prosecution or defense at session init
+- Assignment can be changed in the Preparation Panel via a toggle button
+- Reassignment regenerates witness prep materials for the new side context
+- Hard restrictions from case materials (prosecution-only, defense-only) override random assignments
+- During trial, only the assigned side may call an "either" witness
+
+---
+
+## 9. Audio Toggle
+
+- Users can enable/disable TTS audio before or during the trial
+- When disabled, all TTS generation and playback is skipped
+- Trial continues on transcript only (no audio delay)
+- Audio can be toggled at any time without disrupting trial flow
+
+---
+
+## 10. Trial Flow Controls
+
+- **Pause**: Suspends trial after current action completes
+- **Resume**: Continues from paused state
+- **Stop**: Permanently halts the trial and transitions to scoring
+- Controls are cooperative — checked between examination phases, witness calls, and Q&A pairs
+
+---
+
+## 11. Email Reports
+
+- Formatted HTML reports with scores and transcript can be emailed from the Score Details page
+- Requires SMTP configuration in backend `.env` (SMTP_HOST, SMTP_USER, SMTP_PASSWORD)
+- Recipients, content inclusion (transcript/scores), and sender name are configurable per send
+- Endpoint: `POST /api/trial/{sessionId}/email-report`
+
+---
+
+## 12. Recorded Trials & Public Viewing
+
+Completed trials are publicly viewable without authentication:
+
+- **`/trials`** — Lists all completed trial simulations with case name, date, role, and exchange count
+- **`/trials/{sessionId}`** — Unified trial detail page showing transcript (with audio playback) and scores
+
+### Unified Detail Page
+
+Both public "Recorded Trials" and authenticated "Recent Trials" (from the dashboard) use the same `/trials/{sessionId}` page. The page adapts to available data:
+
+| Scenario | Behavior |
+|----------|----------|
+| Transcript + audio + scores available | Both Transcript and Scores tabs shown, audio controls active |
+| Scores only (no transcript) | Auto-switches to Scores tab, transcript tab shows "No transcript available" |
+| Neither available | Shows "No data available" with back navigation |
+
+### Audio Playback Controls
+
+When cached audio exists, the transcript tab provides:
+- **Play Full Trial** — Plays all entries sequentially
+- **Pause / Resume** — Pauses and resumes the current playback
+- **Stop** — Stops playback completely
+- **Per-entry play buttons** — Play individual transcript entries
+
+Audio is never regenerated — playback uses permanently cached MP3 files from Supabase Storage.
+
+---
+
+## 13. Persistent TTS Audio
+
+All TTS audio is generated once on the backend during the live trial and stored permanently in Supabase Storage (`tts-audio-cache` bucket). Users only play back stored audio — no per-playback API costs are incurred. See `AUDIO.md` Section 9 for details.
