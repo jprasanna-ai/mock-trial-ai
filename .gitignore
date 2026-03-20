@@ -34,6 +34,8 @@ build/
 # NODE.JS / NEXT.JS
 # =============================================================================
 node_modules/
+# Vercel CLI link (anywhere in repo)
+**/.vercel/
 .next/
 out/
 .nuxt/

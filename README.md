@@ -916,6 +916,7 @@ The application is deployed as a split architecture:
 - Root directory: `frontend`
 - Output: Standalone (`next.config.mjs`)
 - Environment variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- **Deploy guide:** [docs/VERCEL.md](docs/VERCEL.md) (GitHub vs CLI, root directory, team/git-author errors)
 
 ### Supabase Configuration
 
